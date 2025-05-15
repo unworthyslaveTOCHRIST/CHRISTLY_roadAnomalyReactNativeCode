@@ -1,5 +1,5 @@
 // ALL THANKS AND GLORY TO THE AND my ONLY GOD AND LORD JESUS CHRIST ALONE
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef,useState } from "react";
 import { Alert, Button, StyleSheet, View, Text, Platform } from "react-native";
 import { AppleMaps, GoogleMaps } from "expo-maps";
 import { GTLJC_locationList } from "../GTLJC_LocationList";
@@ -8,9 +8,9 @@ import { SafeAreaView } from "react-native";
 import {useBottomTabOverflow} from "../components/ui/TabBarBackground"
 import { AppleMapsMapType } from "expo-maps/build/apple/AppleMaps.types";
 import { GoogleMapsMapType } from "expo-maps/build/google/GoogleMaps.types";
-import { coolDownAsync } from "expo-web-browser";
+// import { coolDownAsync } from "expo-web-browser";
 import * as Location from "expo-location"
-import Geolocation from "react-native-geolocation-service"
+import { Accelerometer, Gyroscope } from 'expo-sensors';
 
 
 const GTLJC_SF_ZOOM = 12;
@@ -22,153 +22,282 @@ export default function GTLJC_RootIndex(){
     const [GTLJC_userLocation, GTLJC_setUserLocation] = React.useState(null);
     const [GTLJC_permission, GTLJC_setPermission] = React.useState(null);
     const [GTLJC_cameraPosition, GTLJC_setCameraPosition] = React.useState({
+      // coordinates : {
+      //   latitude : 31.771959,
+      //   longitude : 35.217018
+      // }
       coordinates : {
-        latitude : 31.771959,
-        longitude : 35.217018
-      }
+        latitude : 9.081999,
+        longitude : 8.675277
+      },
+      zoom : 1
+    })
+    const [GTLJC_inData, GTLJC_setInData] = React.useState({})
+    const [GTLJC_outData, GTLJC_setOutData] = React.useState({
+      batch_id : 0,
+      acc_x : 0,
+      acc_y : 0,
+      acc_z : 0,
+      rot_x : 0,
+      rot_y : 0,
+      rot_z : 0,
+      speed : 0,
+      timestamp : (new Date).toISOString(),
+      log_interval : 0,
+
     })
 
-    function GTLJC_GoogleMapsView(){
-      return ""
-    }
-    React.useEffect(()=>{
-      setTimeout(
-        ()=>{
-            const GTLJC_getLocation = async ()=>{
+    const [GTLJC_date, GTLJC_setDate] = React.useState((new Date).toISOString())
+    const [GTLJC_batchId, GTLJC_setbatchId] = React.useState(0)
+    const [GTLJC_counter, GTLJC_setCounter] = React.useState(0)
+    const [GTLJC_intervalMilli, GTLJC_setIntervalMilli] = React.useState((new Date).getMilliseconds())
+    const [GTLJC_repeatDet, GTLJC_setRepeatTimer] = React.useState(0)
 
-              const GTLJC_status = await Location.requestForegroundPermissionsAsync()
-              if (GTLJC_status !== "granted") {
-                "";
-              }
+    const [{ acc_x, acc_y, acc_z}, GTLJC_setData] = useState({
+    acc_x: 0,
+    acc_y: 0,
+    acc_z: 0,
+  });
 
-              const GTLJC_location = await Location.getCurrentPositionAsync({});
-              console.log(GTLJC_location);
 
-              ref.current?.setCameraPosition({
-                  coordinates :{
-                    latitude : GTLJC_location.coords.latitude,
-                    longitude : GTLJC_location.coords.longitude
-                },
-                  zoom : 17,
-              });
-              console.log(ref)
+  const [{ rot_x, rot_y, rot_z}, GTLJC_setData_gyr] = useState({
+    rot_x: 0,
+    rot_y: 0,
+    rot_z: 0,
+  });
 
-              GTLJC_setUserLocation({
+  const [subscription, setSubscription] = useState(null);
+  const [subscription_gyr, setSubscription_gyr] = useState(null);
+
+  Accelerometer.setUpdateInterval(5000);
+  Gyroscope.setUpdateInterval(30);
+
+  const _subscribe = () => {
+    setSubscription(Accelerometer.addListener( accelerometerData =>
+      GTLJC_setData({
+        acc_x : accelerometerData.x,
+        acc_y : accelerometerData.y,
+        acc_z : accelerometerData.z
+      })
+    
+    ));
+    setSubscription_gyr(
+      Gyroscope.addListener(gyroScopeData =>{
+        GTLJC_setData_gyr({
+          rot_x : gyroScopeData.x * 9.81,
+          rot_y : gyroScopeData.y * 9.81,
+          rot_z : gyroScopeData.z * 9.81
+        } )
+      })
+    )
+  };
+
+  const _unsubscribe = () => {
+    subscription && subscription.remove();
+    subscription_gyr && subscription_gyr.remove();
+    setSubscription(null);
+    setSubscription_gyr(null);
+  };
+
+  React.useEffect(()=>{
+    setTimeout(
+      ()=>{
+          const GTLJC_getLocation = async ()=>{
+
+            const GTLJC_status = await Location.requestForegroundPermissionsAsync()
+            if (GTLJC_status !== "granted") {
+              "";
+            }
+
+            const GTLJC_location = await Location.getCurrentPositionAsync({});
+            console.log(GTLJC_location);
+
+            ref.current?.setCameraPosition({
                 coordinates :{
                   latitude : GTLJC_location.coords.latitude,
                   longitude : GTLJC_location.coords.longitude
-                }
-              })
-          }
+              },
+                zoom : 17,
+            });
+            console.log(ref)
 
-          GTLJC_getLocation();
-        },5000)      
-
-    },[])
-
-    React.useEffect(()=>{
-      let GTLJC_subscription = null;
-
-      const GTLJC_startLocationUpdates = async () =>{
-        const GTLJC_status = await Location.requestForegroundPermissionsAsync()
-              if (GTLJC_status !== "granted") {
-                "";
+            GTLJC_setUserLocation({
+              coordinates :{
+                latitude : GTLJC_location.coords.latitude,
+                longitude : GTLJC_location.coords.longitude
               }
-
-        GTLJC_subscription = await Location.watchPositionAsync(
-          {
-            accuracy : Location.Accuracy.Higest,
-            timeInterval : 100,
-            distanceInterval : 0 // To graciously update regardless of movement
-          },
-          (GTLJC_newLocation)=>{
-            console.log(GTLJC_newLocation.coords)
-          }
-        )
-      }
-
-      GTLJC_startLocationUpdates();
-
-      return ()=>{
-        if (GTLJC_subscription){
-          GTLJC_subscription.remove();
+            })
         }
-      };
-    },[])
 
+        GTLJC_getLocation();
+      },3000)      
 
-    function GTLJC_handleChangeWithRef(GTLJC_direction){
-        console.log(GTLJC_direction);
-        const GTLJC_newIndex = GTLJC_locationIndex + (GTLJC_direction == "gtljc_next" ? 1 : -1)
-        console.log(GTLJC_newIndex)
-        const GTLJC_nextLocation = GTLJC_locationList[GTLJC_newIndex];
+  },[])
 
-        // Graciously setting camera first to ensure animation happens
-        ref.current?.setCameraPosition({
-            coordinates : {
-                latitude: GTLJC_nextLocation.stores[0].point[0],
-                longitude : GTLJC_nextLocation.stores[0].point[1],
-            },
+  useEffect(()=>{
+    let GTLJC_subscription = null;
 
-            zoom : 17,
-        });
-        console.log(ref)
+    const GTLJC_startLocationUpdates = async () =>{
+      const GTLJC_status = await Location.requestForegroundPermissionsAsync()
+            if (GTLJC_status !== "granted") {
+              "";
+            }
 
-        // Graciously update state after animation is triggered
-        GTLJC_setLocationIndex(GTLJC_newIndex)
-
-
+      GTLJC_subscription = await Location.watchPositionAsync(
+        {
+          accuracy : Location.Accuracy.Higest,
+          timeInterval : 100,
+          distanceInterval : 0 // To graciously update regardless of movement
+        },
+        (GTLJC_newLocation)=>{
+          console.log(GTLJC_newLocation.coords)
+        }
+      )
     }
 
-    const GTLJC_renderMapControls = () => {
+    GTLJC_startLocationUpdates();
 
-        return(
-             <>
-            <View style = {{flex : 8}}  pointerEvents="none" />
+    return ()=>{
+      if (GTLJC_subscription){
+        GTLJC_subscription.remove();
+      }
+    };
+  },[])
 
-            <View style = {styles.controlsContainer} pointerEvents="auto">
-                {/* 1 */}
-                <Button title = "GTLJC_Prev" onPress = {() => GTLJC_handleChangeWithRef("gtljc_prev")} />
-                <Button title = "GTLJC_Next" onPress = {()=> GTLJC_handleChangeWithRef("gtljc_next")} />
-            </View>
-        </>
-        )
-       
+  const GTLJC_getDataIn = async ()=>{
+
+    GTLJC_setRepeatTimer(GTLJC_prev=>GTLJC_prev + 1);
+    const GTLJC_res = await fetch("https://roadanomalyforchrist.pythonanywhere.com/api-road-in/road_anomaly_in/").catch(err=>console.log(err))
+    const GTLJC_resJson = await GTLJC_res.json()
+    GTLJC_setInData(GTLJC_resJson)
+    console.log(GTLJC_resJson)
+
+  }
+
+  const GTLJC_getDataOut = async ()=>{
+
+    GTLJC_setRepeatTimer(GTLJC_prev=>GTLJC_prev + 1);
+    GTLJC_setCounter(GTLJC_prev=>GTLJC_prev + 1)
+    GTLJC_setDate((new Date).toISOString())
+    if (GTLJC_counter >= 59){
+      GTLJC_setCounter(0);
+      GTLJC_setbatchId((GTLJC_prev)=> GTLJC_prev + 1)
     }
-    if (Platform.OS === "ios"){
-        return(
+    GTLJC_setIntervalMilli((new Date).getMilliseconds())
+    
+    GTLJC_setOutData({
+      batch_id : GTLJC_batchId,
+      acc_x,
+      acc_y,
+      acc_z,
+      rot_x,
+      rot_y,
+      rot_z,
+      speed : 0,
+      timestamp : GTLJC_date,
+      log_interval : GTLJC_intervalMilli,
+
+    })
+
+    // console.log("BY GOD'S GRACE ALONE : " + GTLJC_outData.batch_id );
+
+    const GTLJC_res = await fetch("https://roadanomalyforchrist.pythonanywhere.com/api-road-out/road_anomaly_out/",
+              {
+                method : 'POST',
+                headers : {
+                    'Content-Type' : 'application/json',
+                },
+                body : JSON.stringify(GTLJC_outData)
+              }
+          ).catch(err=>console.log(err))
+
+    const GTLJC_resJson = await GTLJC_res.json();
+    console.log(GTLJC_resJson);
+
+  }
+
+  const [GTLJC_sendData, GTLJC_setSendData] = React.useState(false)
+    useEffect(() => {
+      _subscribe();
+      {GTLJC_sendData && GTLJC_getDataOut();}
+      return () => _unsubscribe();
+    }, [acc_x]);
+
+
+    
+
+  function GTLJC_handleChangeWithRef(GTLJC_direction){
+      console.log(GTLJC_direction);
+      const GTLJC_newIndex = GTLJC_locationIndex + (GTLJC_direction == "gtljc_next" ? 1 : -1)
+      console.log(GTLJC_newIndex)
+      const GTLJC_nextLocation = GTLJC_locationList[GTLJC_newIndex];
+
+      // Graciously setting camera first to ensure animation happens
+      ref.current?.setCameraPosition({
+          coordinates : {
+              latitude: GTLJC_nextLocation.stores[0].point[0],
+              longitude : GTLJC_nextLocation.stores[0].point[1],
+          },
+
+          zoom : 17,
+      });
+      console.log(ref)
+
+      // Graciously update state after animation is triggered
+      GTLJC_setLocationIndex(GTLJC_newIndex)
+
+
+  }
+
+  const GTLJC_renderMapControls = () => {
+
+      return(
             <>
-                <AppleMaps.View
-                    style = {StyleSheet.absoluteFill}
-                    cameraPosition={{
-                        coordinates : {
-                            latitude : 37.8199,
-                            longitude : -122.4783
-                        },
-                        zoom : 12
-                    }}
-                />
-            </>
-        )
-    }
-    else if (Platform.OS === "android"){
-        return(
-             <>
-                <GoogleMaps.View
-                    style = {StyleSheet.absoluteFill}
-                    cameraPosition = {GTLJC_cameraPosition}
-                    ref={ref}
-                    markers = {GTLJC_markersGoogle}
-                    polylines={[
-                      {
-                        color : "blue",
-                        coordinates : GTLJC_polylineCoordinates,
-                        width : 10,
-                        // geodesic : true
-                      }
-                    ]}
+          <View style = {{flex : 8}}  pointerEvents="none" />
 
-                    properties={{
+          <View style = {styles.controlsContainer} pointerEvents="auto">
+              {/* 1 */}
+              <Button title = "GTLJC_Prev" onPress = {() => GTLJC_handleChangeWithRef("gtljc_prev")} />
+              <Button title = "GTLJC_Next" onPress = {()=> GTLJC_handleChangeWithRef("gtljc_next")} />
+          </View>
+      </>
+      )
+      
+  }
+  if (Platform.OS === "ios"){
+      return(
+          <>
+              <AppleMaps.View
+                  style = {StyleSheet.absoluteFill}
+                  cameraPosition={{
+                      coordinates : {
+                          latitude : 37.8199,
+                          longitude : -122.4783
+                      },
+                      zoom : 12
+                  }}
+              />
+          </>
+      )
+  }
+  else if (Platform.OS === "android"){
+      return(
+            <>
+              <GoogleMaps.View
+                  style = {StyleSheet.absoluteFill}
+                  cameraPosition = {GTLJC_cameraPosition}
+                  ref={ref}
+                  markers = {GTLJC_markersGoogle}
+                  polylines={[
+                    {
+                      color : "blue",
+                      coordinates : GTLJC_polylineCoordinates,
+                      width : 10,
+                      // geodesic : true
+                    }
+                  ]}
+
+                  properties={{
                       mapType : GoogleMapsMapType.NORMAL,
                       isBuildingEnabled : true,
                       isIndoorEnabled : true,
