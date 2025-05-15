@@ -1,5 +1,5 @@
 // ALL THANKS AND GLORY TO THE AND my ONLY GOD AND LORD JESUS CHRIST ALONE
-import React, { useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import { Alert, Button, StyleSheet, View, Text, Platform } from "react-native";
 import { AppleMaps, GoogleMaps } from "expo-maps";
 import { GTLJC_locationList } from "../GTLJC_LocationList";
@@ -32,54 +32,69 @@ export default function GTLJC_RootIndex(){
       return ""
     }
     React.useEffect(()=>{
-      // setTimeout(
-        // ()=>{
+      setTimeout(
+        ()=>{
             const GTLJC_getLocation = async ()=>{
-            const GTLJC_status = await Location.requestForegroundPermissionsAsync()
-            if (GTLJC_status !== "granted") {
-              "";
-            }
 
-            const GTLJC_location = await Location.getCurrentPositionAsync({});
-            console.log(GTLJC_location);
+              const GTLJC_status = await Location.requestForegroundPermissionsAsync()
+              if (GTLJC_status !== "granted") {
+                "";
+              }
 
-            ref.current?.setCameraPosition({
+              const GTLJC_location = await Location.getCurrentPositionAsync({});
+              console.log(GTLJC_location);
+
+              ref.current?.setCameraPosition({
+                  coordinates :{
+                    latitude : GTLJC_location.coords.latitude,
+                    longitude : GTLJC_location.coords.longitude
+                },
+                  zoom : 17,
+              });
+              console.log(ref)
+
+              GTLJC_setUserLocation({
                 coordinates :{
                   latitude : GTLJC_location.coords.latitude,
                   longitude : GTLJC_location.coords.longitude
-              },
-                zoom : 17,
-            });
-            console.log(ref)
-
-            GTLJC_setUserLocation({
-              coordinates :{
-                latitude : GTLJC_location.coords.latitude,
-                longitude : GTLJC_location.coords.longitude
-              }
-            })
+                }
+              })
           }
 
           GTLJC_getLocation();
-        // },2000)      
+        },5000)      
 
     },[])
 
-  
+    React.useEffect(()=>{
+      let GTLJC_subscription = null;
 
-  // GTLJC_getLocationUpdates();
-           
-    // const GTLJC_cameraPosition = {
-    //     coordinates : {
-    //         // latitude : GTLJC_locationList[0].stores[0].point[0],
-    //         latitude : 33.8121,
-    //         // longitude : GTLJC_locationList[0].stores[0].point[1],
-    //         longitude : -117.919
-    //     },
-    //     zoom : 10,
-    // }
+      const GTLJC_startLocationUpdates = async () =>{
+        const GTLJC_status = await Location.requestForegroundPermissionsAsync()
+              if (GTLJC_status !== "granted") {
+                "";
+              }
 
+        GTLJC_subscription = await Location.watchPositionAsync(
+          {
+            accuracy : Location.Accuracy.Higest,
+            timeInterval : 100,
+            distanceInterval : 0 // To graciously update regardless of movement
+          },
+          (GTLJC_newLocation)=>{
+            console.log(GTLJC_newLocation.coords)
+          }
+        )
+      }
 
+      GTLJC_startLocationUpdates();
+
+      return ()=>{
+        if (GTLJC_subscription){
+          GTLJC_subscription.remove();
+        }
+      };
+    },[])
 
 
     function GTLJC_handleChangeWithRef(GTLJC_direction){
@@ -104,9 +119,7 @@ export default function GTLJC_RootIndex(){
 
 
     }
-    // setInterval(
-    //     GTLJC_handleChangeWithRef,2000
-    // )
+
     const GTLJC_renderMapControls = () => {
 
         return(
@@ -117,22 +130,6 @@ export default function GTLJC_RootIndex(){
                 {/* 1 */}
                 <Button title = "GTLJC_Prev" onPress = {() => GTLJC_handleChangeWithRef("gtljc_prev")} />
                 <Button title = "GTLJC_Next" onPress = {()=> GTLJC_handleChangeWithRef("gtljc_next")} />
-
-                {/* 2 */}
-                {/* <Button 
-                    title = "Graciously set random"
-                    onPress = {()=>
-                        ref.current ?. GTLJC_setCameraPosition({
-                            coordinates : {
-                                latitude: Math.random() * 360 - 180,
-                                longitude : Math.random() * 360 -180
-                            },
-
-                            zoom : 1,
-                        })
-                    }
-
-                /> */}
             </View>
         </>
         )
@@ -193,33 +190,33 @@ export default function GTLJC_RootIndex(){
                     //   compassEnabled : true
                     // }}
 
-                    onPolylineClick={(event) => {
-                      console.log(event);
-                      Alert.alert("Polyline clicked", JSON.stringify(event));
-                    }}
-                    onMapLoaded={() => {
-                      console.log(JSON.stringify({ type: "onMapLoaded" }, null, 2));
-                    }}
+                    // onPolylineClick={(event) => {
+                    //   console.log(event);
+                    //   Alert.alert("Polyline clicked", JSON.stringify(event));
+                    // }}
+                    // onMapLoaded={() => {
+                    //   console.log(JSON.stringify({ type: "onMapLoaded" }, null, 2));
+                    // }}
                     onMapClick={(e) => {
                       console.log(
                         JSON.stringify({ type: "onMapClick", data: e }, null, 2)
                       );
                     }}
-                    onMapLongClick={(e) => {
-                      console.log(
-                        JSON.stringify({ type: "onMapLongClick", data: e }, null, 2)
-                      );
-                    }}
-                    onPOIClick={(e) => {
-                      console.log(
-                        JSON.stringify({ type: "onPOIClick", data: e }, null, 2)
-                      );
-                    }}
-                    onMarkerClick={(e) => {
-                      console.log(
-                        JSON.stringify({ type: "onMarkerClick", data: e }, null, 2)
-                      );
-                    }}
+                    // onMapLongClick={(e) => {
+                    //   console.log(
+                    //     JSON.stringify({ type: "onMapLongClick", data: e }, null, 2)
+                    //   );
+                    // }}
+                    // onPOIClick={(e) => {
+                    //   console.log(
+                    //     JSON.stringify({ type: "onPOIClick", data: e }, null, 2)
+                    //   );
+                    // }}
+                    // onMarkerClick={(e) => {
+                    //   console.log(
+                    //     JSON.stringify({ type: "onMarkerClick", data: e }, null, 2)
+                    //   );
+                    // }}
                     onCameraMove={(e) => {
                       console.log(
                         JSON.stringify({ type: "onCameraMove", data: e }, null, 2)
