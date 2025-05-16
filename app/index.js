@@ -15,11 +15,16 @@ import { Accelerometer, Gyroscope } from 'expo-sensors';
 
 const GTLJC_SF_ZOOM = 12;
 
+let GTLJC_userLocationGlobal = false;
+
 export default function GTLJC_RootIndex(){
     const GTLJC_bottom = useBottomTabOverflow();
     const [GTLJC_locationIndex, GTLJC_setLocationIndex] = React.useState(0)
+    const [GTLJC_userLocation, GTLJC_setUserLocation] = React.useState(null);   
+    const [GTLJC_markersGoogle, GTLJC_setMarkersGoogle] = React.useState([]);
+
+    
     const ref =  React.useRef(null)
-    const [GTLJC_userLocation, GTLJC_setUserLocation] = React.useState(null);
     const [GTLJC_permission, GTLJC_setPermission] = React.useState(null);
     const [GTLJC_cameraPosition, GTLJC_setCameraPosition] = React.useState({
       // coordinates : {
@@ -31,7 +36,9 @@ export default function GTLJC_RootIndex(){
         longitude : 8.675277
       },
       zoom : 1
-    })
+    });
+
+
     const [GTLJC_inData, GTLJC_setInData] = React.useState({})
     const [GTLJC_outData, GTLJC_setOutData] = React.useState({
       batch_id : 0,
@@ -125,14 +132,34 @@ export default function GTLJC_RootIndex(){
               coordinates :{
                 latitude : GTLJC_location.coords.latitude,
                 longitude : GTLJC_location.coords.longitude
-              }
+              },
+              zoom : 17
             })
-        }
+
+            
+         
+          }
 
         GTLJC_getLocation();
       },3000)      
 
   },[])
+
+  useEffect(
+    ()=>{
+            if (GTLJC_userLocation) {
+              //  console.log("Gracious user location set globally: ", GTLJC_userLocation);
+               GTLJC_setMarkersGoogle([
+                  {
+                    coordinates : GTLJC_userLocation && GTLJC_userLocation.coordinates,
+                    title : "User Current Location ",
+                  }
+                ])
+            }         
+       
+
+        }
+  ,[rot_x])
 
   useEffect(()=>{
     let GTLJC_subscription = null;
@@ -150,9 +177,27 @@ export default function GTLJC_RootIndex(){
           distanceInterval : 0 // To graciously update regardless of movement
         },
         (GTLJC_newLocation)=>{
-          console.log(GTLJC_newLocation.coords)
-        }
-      )
+              ref.current?.setCameraPosition({
+              coordinates :{
+                latitude : GTLJC_newLocation.coords.latitude,
+                longitude : GTLJC_newLocation.coords.longitude
+            },
+              zoom : 17,
+          });
+
+           GTLJC_setUserLocation({
+            coordinates :{
+              latitude : GTLJC_newLocation.coords.latitude,
+              longitude : GTLJC_newLocation.coords.longitude
+            },
+            zoom : 17
+          })
+
+          console.log(GTLJC_newLocation.coords);
+          console.log(ref)
+        }     
+      )  
+
     }
 
     GTLJC_startLocationUpdates();
@@ -164,14 +209,14 @@ export default function GTLJC_RootIndex(){
     };
   },[])
 
+
   const GTLJC_getDataIn = async ()=>{
 
     GTLJC_setRepeatTimer(GTLJC_prev=>GTLJC_prev + 1);
     const GTLJC_res = await fetch("https://roadanomalyforchrist.pythonanywhere.com/api-road-in/road_anomaly_in/").catch(err=>console.log(err))
     const GTLJC_resJson = await GTLJC_res.json()
     GTLJC_setInData(GTLJC_resJson)
-    console.log(GTLJC_resJson)
-
+    // console.log(GTLJC_resJson)
   }
 
   const GTLJC_getDataOut = async ()=>{
@@ -219,9 +264,11 @@ export default function GTLJC_RootIndex(){
   const [GTLJC_sendData, GTLJC_setSendData] = React.useState(false)
     useEffect(() => {
       _subscribe();
-      {GTLJC_sendData && GTLJC_getDataOut();}
+      GTLJC_getDataIn();
+      // {GTLJC_sendData && GTLJC_getDataOut();}
       return () => _unsubscribe();
-    }, [acc_x]);
+    }, [rot_x]);
+
 
 
     
@@ -346,11 +393,11 @@ export default function GTLJC_RootIndex(){
                     //     JSON.stringify({ type: "onMarkerClick", data: e }, null, 2)
                     //   );
                     // }}
-                    onCameraMove={(e) => {
-                      console.log(
-                        JSON.stringify({ type: "onCameraMove", data: e }, null, 2)
-                      );
-                    }}
+                    // onCameraMove={(e) => {
+                    //   console.log(
+                    //     JSON.stringify({ type: "onCameraMove", data: e }, null, 2)
+                    //   );
+                    // }}
                 />
                 {GTLJC_renderMapControls()}
                     
@@ -374,79 +421,50 @@ const styles = StyleSheet.create({
   },
 });
 
-const GTLJC_markersGoogle = [
-  {
-    coordinates: { latitude: 49.259133, longitude: -123.10079 },
-    // title: "49th Parallel Café & Lucky's Doughnuts - Main Street",
-    snippet: "49th Parallel Café & Lucky's Doughnuts - Main Street",
-    draggable: true,
-    // icon: 
-  },
-  {
-    coordinates: { latitude: 49.268034, longitude: -123.154819 },
-    // title: "49th Parallel Café & Lucky's Doughnuts - 4th Ave",
-    snippet: "49th Parallel Café & Lucky's Doughnuts - 4th Ave",
-    draggable: true,
-  },
-  {
-    coordinates: { latitude: 49.286036, longitude: -123.12303 },
-    // title: "49th Parallel Café & Lucky's Doughnuts - Thurlow",
-    snippet: "49th Parallel Café & Lucky's Doughnuts - Thurlow",
-    draggable: true,
-  },
-  {
-    coordinates: { latitude: 49.311879, longitude: -123.079241 },
-    // title: "49th Parallel Café & Lucky's Doughnuts - Lonsdale",
-    snippet: "49th Parallel Café & Lucky's Doughnuts - Lonsdale",
-    draggable: true,
-  },
-  {
-    coordinates: {
-      latitude: 49.27235336018808,
-      longitude: -123.13455838338278,
-    },
-    // title: "A La Mode Pie Café - Granville Island",
-    snippet: "A La Mode Pie Café - Granville Island",
-    draggable: true,
-    
-  },
-];
 
-const markersApple = [
-  {
-    coordinates: { latitude: 49.259133, longitude: -123.10079 },
-    title: "49th Parallel Café & Lucky's Doughnuts - Main Street",
-    tintColor: "brown",
-    systemImage: "cup.and.saucer.fill",
-  },
-  {
-    coordinates: { latitude: 49.268034, longitude: -123.154819 },
-    title: "49th Parallel Café & Lucky's Doughnuts - 4th Ave",
-    tintColor: "brown",
-    systemImage: "cup.and.saucer.fill",
-  },
-  {
-    coordinates: { latitude: 49.286036, longitude: -123.12303 },
-    title: "49th Parallel Café & Lucky's Doughnuts - Thurlow",
-    tintColor: "brown",
-    systemImage: "cup.and.saucer.fill",
-  },
-  {
-    coordinates: { latitude: 49.311879, longitude: -123.079241 },
-    title: "49th Parallel Café & Lucky's Doughnuts - Lonsdale",
-    tintColor: "brown",
-    systemImage: "cup.and.saucer.fill",
-  },
-  {
-    coordinates: {
-      latitude: 49.27235336018808,
-      longitude: -123.13455838338278,
-    },
-    title: "A La Mode Pie Café - Granville Island",
-    tintColor: "orange",
-    systemImage: "fork.knife",
-  },
-];
+function GTLJC_setUserMarker(){
+  if (GTLJC_userLocationGlobal){
+    return GTLJC_userLocationGlobal.coordinates
+  }
+
+  return  { latitude: 49.268034, longitude: -123.154819 }
+}
+
+// const markersApple = [
+//   {
+//     coordinates: { latitude: 49.259133, longitude: -123.10079 },
+//     title: "49th Parallel Café & Lucky's Doughnuts - Main Street",
+//     tintColor: "brown",
+//     systemImage: "cup.and.saucer.fill",
+//   },
+//   {
+//     coordinates: { latitude: 49.268034, longitude: -123.154819 },
+//     title: "49th Parallel Café & Lucky's Doughnuts - 4th Ave",
+//     tintColor: "brown",
+//     systemImage: "cup.and.saucer.fill",
+//   },
+//   {
+//     coordinates: { latitude: 49.286036, longitude: -123.12303 },
+//     title: "49th Parallel Café & Lucky's Doughnuts - Thurlow",
+//     tintColor: "brown",
+//     systemImage: "cup.and.saucer.fill",
+//   },
+//   {
+//     coordinates: { latitude: 49.311879, longitude: -123.079241 },
+//     title: "49th Parallel Café & Lucky's Doughnuts - Lonsdale",
+//     tintColor: "brown",
+//     systemImage: "cup.and.saucer.fill",
+//   },
+//   {
+//     coordinates: {
+//       latitude: 49.27235336018808,
+//       longitude: -123.13455838338278,
+//     },
+//     title: "A La Mode Pie Café - Granville Island",
+//     tintColor: "orange",
+//     systemImage: "fork.knife",
+//   },
+// ];
 
 
 const GTLJC_polylineCoordinates = [
