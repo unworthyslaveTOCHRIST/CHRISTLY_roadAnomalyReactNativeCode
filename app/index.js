@@ -1,6 +1,6 @@
 // ALL THANKS AND GLORY TO THE AND my ONLY GOD AND LORD JESUS CHRIST ALONE
 import React, { useEffect, useRef,useState } from "react";
-import { Alert, Button, StyleSheet, View, Text, Platform } from "react-native";
+import { Alert, Button, StyleSheet, View, Text, Platform, Image } from "react-native";
 import { AppleMaps, GoogleMaps } from "expo-maps";
 import { GTLJC_locationList } from "../GTLJC_LocationList";
 // import { SafeAreaView } from "react-native-safe-area-context";
@@ -11,13 +11,30 @@ import { GoogleMapsMapType } from "expo-maps/build/google/GoogleMaps.types";
 // import { coolDownAsync } from "expo-web-browser";
 import * as Location from "expo-location"
 import { Accelerometer, Gyroscope } from 'expo-sensors';
+import {useImage} from "expo-image"
+// import MapView from "react-native-maps"
+
 
 
 const GTLJC_SF_ZOOM = 12;
 
 let GTLJC_userLocationGlobal = false;
 
+  
 export default function GTLJC_RootIndex(){
+    const GTLJC_smoothroadIcon = useImage(require("../assets/images/smooth_FORCHRIST.jpg"))
+    const GTLJC_potholeIcon = useImage(require("../assets/images/pothole_FORCHRIST.jpg"))
+    const GTLJC_crackIcon = useImage(require("../assets/images/crack_FORCHRIST.jpg"))
+    const GTLJC_bumpIcon = useImage(require("../assets/images/bump_FORCHRIST.jpg"))
+
+    const GTLJC_icons = {
+      smooth : GTLJC_smoothroadIcon,
+      crack : GTLJC_crackIcon,
+      pothole_mild : GTLJC_potholeIcon,
+      pothole_severe : GTLJC_potholeIcon,
+      bump : GTLJC_bumpIcon
+    };
+
     const GTLJC_bottom = useBottomTabOverflow();
     const [GTLJC_locationIndex, GTLJC_setLocationIndex] = React.useState(0)
     const [GTLJC_userLocation, GTLJC_setUserLocation] = React.useState(null);   
@@ -39,8 +56,8 @@ export default function GTLJC_RootIndex(){
     });
 
 
-    const [GTLJC_inData, GTLJC_setInData] = React.useState({})
-    const [GTLJC_outData, GTLJC_setOutData] = React.useState({
+    const [GTLJC_inData, GTLJC_setInData] = React.useState([])
+    const [GTLJC_outData, GTLJC_setOutData] = React.useState([{
       batch_id : 0,
       acc_x : 0,
       acc_y : 0,
@@ -52,7 +69,7 @@ export default function GTLJC_RootIndex(){
       timestamp : (new Date).toISOString(),
       log_interval : 0,
 
-    })
+    }])
 
     const [GTLJC_date, GTLJC_setDate] = React.useState((new Date).toISOString())
     const [GTLJC_batchId, GTLJC_setbatchId] = React.useState(0)
@@ -145,18 +162,51 @@ export default function GTLJC_RootIndex(){
 
   },[])
 
+  function GTLJC_chooseIcon(GTLJC_anomaly){
+    if (GTLJC_anomaly == "smooth"){
+      return "../assets/images/smooth_FORCHRIST.jpg"
+    }
+  }
   useEffect(
     ()=>{
-            if (GTLJC_userLocation) {
+            if (GTLJC_userLocation && GTLJC_inData) {
               //  console.log("Gracious user location set globally: ", GTLJC_userLocation);
+
+              const GTLJC_inDataMapped = GTLJC_inData && GTLJC_inData.map((GTLJC_item)=>{
+
+                    return(
+                        
+                      {
+                        coordinates : {
+                          latitude : GTLJC_item.latitude,
+                          longitude : GTLJC_item.longitude
+                        },
+                        title : GTLJC_item.anomaly.toUpperCase(),
+                        snippet : GTLJC_item.anomaly,
+                        draggable : true,
+                        icon : GTLJC_icons[GTLJC_item.anomaly]
+                      }
+                    )
+                  })
+                
+              // console.log(JSON.stringify(GTLJC_inDataMapped))
+            
                GTLJC_setMarkersGoogle([
                   {
-                    coordinates : GTLJC_userLocation && GTLJC_userLocation.coordinates,
+                    coordinates : GTLJC_userLocation.coordinates,
                     title : "User Current Location ",
-                  }
+                    snippet : "User Current Location",
+                    draggable : true,
+                    // showCallout : true,
+                    // icon : "",
+                    // mapToolbarEnabled : false
+
+                  },
+                  ...GTLJC_inDataMapped
+       
                 ])
             }         
-       
+            
 
         }
   ,[rot_x])
@@ -182,7 +232,7 @@ export default function GTLJC_RootIndex(){
                 latitude : GTLJC_newLocation.coords.latitude,
                 longitude : GTLJC_newLocation.coords.longitude
             },
-              zoom : 17,
+              zoom :10,
           });
 
            GTLJC_setUserLocation({
@@ -190,7 +240,8 @@ export default function GTLJC_RootIndex(){
               latitude : GTLJC_newLocation.coords.latitude,
               longitude : GTLJC_newLocation.coords.longitude
             },
-            zoom : 17
+            zoom : 10
+            
           })
 
           console.log(GTLJC_newLocation.coords);
@@ -230,19 +281,23 @@ export default function GTLJC_RootIndex(){
     }
     GTLJC_setIntervalMilli((new Date).getMilliseconds())
     
-    GTLJC_setOutData({
-      batch_id : GTLJC_batchId,
-      acc_x,
-      acc_y,
-      acc_z,
-      rot_x,
-      rot_y,
-      rot_z,
-      speed : 0,
-      timestamp : GTLJC_date,
-      log_interval : GTLJC_intervalMilli,
+    GTLJC_setOutData((GTLJC_prev)=>[
+      ...GTLJC_prev,
+      {
+        batch_id : GTLJC_batchId,
+        acc_x,
+        acc_y,
+        acc_z,
+        rot_x,
+        rot_y,
+        rot_z,
+        speed : 0,
+        timestamp : GTLJC_date,
+        log_interval : GTLJC_intervalMilli,
 
-    })
+     }
+    ]
+  )
 
     // console.log("BY GOD'S GRACE ALONE : " + GTLJC_outData.batch_id );
 
@@ -265,6 +320,9 @@ export default function GTLJC_RootIndex(){
     useEffect(() => {
       _subscribe();
       GTLJC_getDataIn();
+      // setInterval(()=>{
+      //   GTLJC_sendData && GTLJC_getDataOut()
+      // }, 5000)
       // {GTLJC_sendData && GTLJC_getDataOut();}
       return () => _unsubscribe();
     }, [rot_x]);
@@ -277,7 +335,7 @@ export default function GTLJC_RootIndex(){
       console.log(GTLJC_direction);
       const GTLJC_newIndex = GTLJC_locationIndex + (GTLJC_direction == "gtljc_next" ? 1 : -1)
       console.log(GTLJC_newIndex)
-      const GTLJC_nextLocation = GTLJC_locationList[GTLJC_newIndex];
+      const GTLJC_nextLocation = GTLJC_markersGoogle[GTLJC_newIndex];
 
       // Graciously setting camera first to ensure animation happens
       ref.current?.setCameraPosition({
@@ -360,11 +418,12 @@ export default function GTLJC_RootIndex(){
                       // coordinates : 
                     }}
 
-                    // uiSettings={{
-                    //   zoomControlsEnabled : true,
-                    //   // myLocationButtonEnabled : true,
-                    //   compassEnabled : true
-                    // }}
+                    uiSettings={{
+                      zoomControlsEnabled : true,
+                      // myLocationButtonEnabled : true,
+                      compassEnabled : true,
+                      mapToolbarEnabled : false
+                    }}
 
                     // onPolylineClick={(event) => {
                     //   console.log(event);
@@ -399,7 +458,7 @@ export default function GTLJC_RootIndex(){
                     //   );
                     // }}
                 />
-                {GTLJC_renderMapControls()}
+               {GTLJC_renderMapControls()} 
                     
             </>
             
