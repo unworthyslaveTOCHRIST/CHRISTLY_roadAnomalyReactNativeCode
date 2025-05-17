@@ -58,16 +58,20 @@ export default function GTLJC_RootIndex(){
 
     const [GTLJC_inData, GTLJC_setInData] = React.useState([])
     const [GTLJC_outData, GTLJC_setOutData] = React.useState([{
-      batch_id : 0,
-      acc_x : 0,
-      acc_y : 0,
-      acc_z : 0,
-      rot_x : 0,
-      rot_y : 0,
-      rot_z : 0,
-      speed : 0,
-      timestamp : (new Date).toISOString(),
-      log_interval : 0,
+        batch_id : 0,
+        acc_x,
+        acc_y,
+        acc_z,
+        rot_x,
+        rot_y,
+        rot_z,
+        speed : 0,
+        log_interval : 0,
+        latitude : 0,
+        longitude : 0,
+        accuracy : 0,
+        timestamp : (new Date).toISOString(),
+
 
     }])
 
@@ -193,7 +197,10 @@ export default function GTLJC_RootIndex(){
             
                GTLJC_setMarkersGoogle([
                   {
-                    coordinates : GTLJC_userLocation.coordinates,
+                    coordinates : {
+                      latitude : GTLJC_userLocation.latitude,
+                      longitude : GTLJC_userLocation.longitude
+                    },
                     title : "User Current Location ",
                     snippet : "User Current Location",
                     draggable : true,
@@ -235,14 +242,7 @@ export default function GTLJC_RootIndex(){
               zoom :10,
           });
 
-           GTLJC_setUserLocation({
-            coordinates :{
-              latitude : GTLJC_newLocation.coords.latitude,
-              longitude : GTLJC_newLocation.coords.longitude
-            },
-            zoom : 10
-            
-          })
+           GTLJC_setUserLocation(GTLJC_newLocation.coords)
 
           console.log(GTLJC_newLocation.coords);
           console.log(ref)
@@ -278,6 +278,24 @@ export default function GTLJC_RootIndex(){
     if (GTLJC_counter >= 59){
       GTLJC_setCounter(0);
       GTLJC_setbatchId((GTLJC_prev)=> GTLJC_prev + 1)
+      GTLJC_outData.forEach(GTLJC_log=>{
+        async ()=>{
+          const GTLJC_res = await fetch("https://roadanomalyforchrist.pythonanywhere.com/api-road-out/road_anomaly_out/",
+            {
+                method : 'POST',
+                headers : {
+                    'Content-Type' : 'application/json',
+                },
+                body : JSON.stringify(GTLJC_log)
+                  }
+              ).catch(err=>console.log(err))
+
+            const GTLJC_resJson = await GTLJC_res.json();
+            console.log(GTLJC_resJson);
+          }
+        }
+      )
+      GTLJC_setOutData([]);
     }
     GTLJC_setIntervalMilli((new Date).getMilliseconds())
     
@@ -291,9 +309,12 @@ export default function GTLJC_RootIndex(){
         rot_x,
         rot_y,
         rot_z,
-        speed : 0,
+        speed : GTLJC_userLocation && GTLJC_userLocation.speed,
         timestamp : GTLJC_date,
         log_interval : GTLJC_intervalMilli,
+        latitude :GTLJC_userLocation && GTLJC_userLocation.latitude,
+        longitude :GTLJC_userLocation && GTLJC_userLocation.longitude,
+        accuracy :GTLJC_userLocation && GTLJC_userLocation.accuracy
 
      }
     ]
@@ -301,28 +322,28 @@ export default function GTLJC_RootIndex(){
 
     // console.log("BY GOD'S GRACE ALONE : " + GTLJC_outData.batch_id );
 
-    const GTLJC_res = await fetch("https://roadanomalyforchrist.pythonanywhere.com/api-road-out/road_anomaly_out/",
-              {
-                method : 'POST',
-                headers : {
-                    'Content-Type' : 'application/json',
-                },
-                body : JSON.stringify(GTLJC_outData)
-              }
-          ).catch(err=>console.log(err))
+    // const GTLJC_res = await fetch("https://roadanomalyforchrist.pythonanywhere.com/api-road-out/road_anomaly_out/",
+    //           {
+    //             method : 'POST',
+    //             headers : {
+    //                 'Content-Type' : 'application/json',
+    //             },
+    //             body : JSON.stringify(GTLJC_outData)
+    //           }
+    //       ).catch(err=>console.log(err))
 
-    const GTLJC_resJson = await GTLJC_res.json();
-    console.log(GTLJC_resJson);
+    // const GTLJC_resJson = await GTLJC_res.json();
+    // console.log(GTLJC_resJson);
 
   }
 
-  const [GTLJC_sendData, GTLJC_setSendData] = React.useState(false)
+  const [GTLJC_sendData, GTLJC_setSendData] = React.useState(true)
     useEffect(() => {
       _subscribe();
       GTLJC_getDataIn();
-      // setInterval(()=>{
-      //   GTLJC_sendData && GTLJC_getDataOut()
-      // }, 5000)
+      setInterval(()=>{
+        GTLJC_sendData && GTLJC_getDataOut()
+      }, 60000)
       // {GTLJC_sendData && GTLJC_getDataOut();}
       return () => _unsubscribe();
     }, [rot_x]);
