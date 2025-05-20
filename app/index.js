@@ -1,6 +1,6 @@
 // ALL THANKS AND GLORY TO THE AND my ONLY GOD AND LORD JESUS CHRIST ALONE
 import React, { useEffect, useRef,useState } from "react";
-import { Alert, Button, StyleSheet, View, Text, Platform, Image } from "react-native";
+import {Alert, Button, StyleSheet, View, Text, Platform, Image, TouchableOpacity} from "react-native";
 import { AppleMaps, GoogleMaps } from "expo-maps";
 import { GTLJC_locationList } from "../GTLJC_LocationList";
 // import { SafeAreaView } from "react-native-safe-area-context";
@@ -11,8 +11,10 @@ import { GoogleMapsMapType } from "expo-maps/build/google/GoogleMaps.types";
 // import { coolDownAsync } from "expo-web-browser";
 import * as Location from "expo-location"
 import { Accelerometer, Gyroscope } from 'expo-sensors';
-import {useImage} from "expo-image"
-// import MapView from "react-native-maps"
+import {useImage} from "expo-image";
+import Polyline from "@mapbox/polyline"
+
+// import MapView,{Marker} from "react-native-maps"
 
 
 
@@ -26,13 +28,39 @@ export default function GTLJC_RootIndex(){
     const GTLJC_potholeIcon = useImage(require("../assets/images/pothole_FORCHRIST.jpg"))
     const GTLJC_crackIcon = useImage(require("../assets/images/crack_FORCHRIST.jpg"))
     const GTLJC_bumpIcon = useImage(require("../assets/images/bump_FORCHRIST.jpg"))
+    const GTLJC_roadPatchIcon = useImage(require("../assets/images/road_patch_FORCHRISTALONE.png"))
+    
+    const [GTLJC_routeCoords, GTLJC_setRouteCoords] = React.useState(null);
+    const GTLJC_origin = {latitude : 7.3775, longitude : 3.9470}
+    const GTLJC_destination = {latitude : 7.3875, longitude : 3.9570}
+
+    const GTLJC_getRoute = async () => {
+      const GTLJC_apiKey = "AIzaSyBYXMiz3S9-vbA9CxSx1sCLTBDba2wZwmY";
+      const GTLJC_url = `https://maps.googleapis.com/maps/api/directions/json?origin=${GTLJC_origin.latitude},${GTLJC_origin.longitude}&destination=${GTLJC_destination.latitude},${GTLJC_destination.longitude}&mode=driving&key=${GTLJC_apiKey}`;
+
+
+      try{
+        const GTLJC_response = await  fetch(GTLJC_url)  // .catch(err=>console.log("GTLJC Error: " +))
+        const GTLJC_json = await GTLJC_response.json();
+        console.log("Gracious received data : " + JSON.stringify(GTLJC_json) );
+        const GTLJC_points = await Polyline.decode((GTLJC_json.routes[0] && GTLJC_json.routes[0]).overview_polyline.points);
+        const GTLJC_coords = GTLJC_points.map(([latitude, longitude])=> ({latitude, longitude}));
+        GTLJC_setRouteCoords(GTLJC_coords);
+        console.log(GTLJC_routeCoords);
+      }
+      catch(err){
+        console.log("Gracious error fetching directions: ", err)
+      }
+
+    }
 
     const GTLJC_icons = {
       smooth : GTLJC_smoothroadIcon,
       crack : GTLJC_crackIcon,
       pothole_mild : GTLJC_potholeIcon,
       pothole_severe : GTLJC_potholeIcon,
-      bump : GTLJC_bumpIcon
+      bump : GTLJC_bumpIcon,
+      "road-patch" : GTLJC_roadPatchIcon
     };
 
     const GTLJC_bottom = useBottomTabOverflow();
@@ -57,6 +85,7 @@ export default function GTLJC_RootIndex(){
 
 
     const [GTLJC_inData, GTLJC_setInData] = React.useState([])
+    const [GTLJC_inData_info, GTLJC_setInDataInfo] = React.useState([])
     const [GTLJC_outData, GTLJC_setOutData] = React.useState([{
         batch_id : 0,
         acc_x,
@@ -166,11 +195,7 @@ export default function GTLJC_RootIndex(){
 
   },[])
 
-  function GTLJC_chooseIcon(GTLJC_anomaly){
-    if (GTLJC_anomaly == "smooth"){
-      return "../assets/images/smooth_FORCHRIST.jpg"
-    }
-  }
+
   useEffect(
     ()=>{
             if (GTLJC_userLocation && GTLJC_inData) {
@@ -212,6 +237,8 @@ export default function GTLJC_RootIndex(){
                   ...GTLJC_inDataMapped
        
                 ])
+
+                // console.log("Gracious user location: " + GTLJC_userLocation.latitude)
             }         
             
 
@@ -234,18 +261,18 @@ export default function GTLJC_RootIndex(){
           distanceInterval : 0 // To graciously update regardless of movement
         },
         (GTLJC_newLocation)=>{
-              ref.current?.setCameraPosition({
-              coordinates :{
-                latitude : GTLJC_newLocation.coords.latitude,
-                longitude : GTLJC_newLocation.coords.longitude
-            },
-              zoom :10,
-          });
+          //     ref.current?.setCameraPosition({
+          //     coordinates :{
+          //       latitude : GTLJC_newLocation.coords.latitude,
+          //       longitude : GTLJC_newLocation.coords.longitude
+          //   },
+          //     zoom :10,
+          // });
 
            GTLJC_setUserLocation(GTLJC_newLocation.coords)
 
-          console.log(GTLJC_newLocation.coords);
-          console.log(ref)
+          // console.log(GTLJC_newLocation.coords);
+          // console.log(ref)
         }     
       )  
 
@@ -258,7 +285,7 @@ export default function GTLJC_RootIndex(){
         GTLJC_subscription.remove();
       }
     };
-  },[])
+  },[rot_x])
 
 
   const GTLJC_getDataIn = async ()=>{
@@ -267,6 +294,26 @@ export default function GTLJC_RootIndex(){
     const GTLJC_res = await fetch("https://roadanomalyforchrist.pythonanywhere.com/api-road-in/road_anomaly_in/").catch(err=>console.log(err))
     const GTLJC_resJson = await GTLJC_res.json()
     GTLJC_setInData(GTLJC_resJson)
+
+    const GTLJC_inDataInfoStructure = GTLJC_inData && GTLJC_inData.map((GTLJC_item)=>({
+      anomaly :"Anomaly : ".toUpperCase() + GTLJC_item.anomaly + " ==>",
+      distanceToAnomaly : "xxxx",
+      timeToReachAnomaly : "xxxx",
+      latitude : GTLJC_item.latitude,
+      longitude : GTLJC_item.longitude,
+      location : "xxxx"
+    }))
+    GTLJC_setInDataInfo([
+      {
+        anomaly : "User Location" + " (next) ==>",
+        distanceToAnomaly : "0",
+        timeToReachAnomaly : "0",
+        latitude : GTLJC_userLocation.latitude,
+        longitude : GTLJC_userLocation.longitude,
+        location : "xxxx"
+    }, 
+      ...GTLJC_inDataInfoStructure
+    ])
     // console.log(GTLJC_resJson)
   }
 
@@ -274,32 +321,8 @@ export default function GTLJC_RootIndex(){
 
     GTLJC_setRepeatTimer(GTLJC_prev=>GTLJC_prev + 1);
     GTLJC_setCounter(GTLJC_prev=>GTLJC_prev + 1)
-    GTLJC_setDate((new Date).toISOString())
-    if (GTLJC_counter >= 59){
-      GTLJC_setCounter(0);
-      GTLJC_setbatchId((GTLJC_prev)=> GTLJC_prev + 1)
-      GTLJC_outData.forEach(GTLJC_log=>{
-        async ()=>{
-          const GTLJC_res = await fetch("https://roadanomalyforchrist.pythonanywhere.com/api-road-out/road_anomaly_out/",
-            {
-                method : 'POST',
-                headers : {
-                    'Content-Type' : 'application/json',
-                },
-                body : JSON.stringify(GTLJC_log)
-                  }
-              ).catch(err=>console.log(err))
-
-            const GTLJC_resJson = await GTLJC_res.json();
-            console.log(GTLJC_resJson);
-          }
-        }
-      )
-      GTLJC_setOutData([]);
-    }
-    GTLJC_setIntervalMilli((new Date).getMilliseconds())
-    
-    GTLJC_setOutData((GTLJC_prev)=>[
+    GTLJC_setDate((new Date).toISOString());
+        GTLJC_setOutData((GTLJC_prev)=>[
       ...GTLJC_prev,
       {
         batch_id : GTLJC_batchId,
@@ -314,36 +337,47 @@ export default function GTLJC_RootIndex(){
         log_interval : GTLJC_intervalMilli,
         latitude :GTLJC_userLocation && GTLJC_userLocation.latitude,
         longitude :GTLJC_userLocation && GTLJC_userLocation.longitude,
-        accuracy :GTLJC_userLocation && GTLJC_userLocation.accuracy
+        accuracy :GTLJC_userLocation && GTLJC_userLocation.accuracy,
 
      }
     ]
-  )
+  );
+    if (GTLJC_counter >= 59){
+      GTLJC_setCounter(0);
+      GTLJC_setbatchId((GTLJC_prev)=> GTLJC_prev + 1);
 
-    // console.log("BY GOD'S GRACE ALONE : " + GTLJC_outData.batch_id );
+      // async ()=>{
+      //   GTLJC_outData.forEach(GTLJC_log=>{
+          
+      //   })
+      // }
+      const GTLJC_res = await fetch("https://roadanomalyforchrist.pythonanywhere.com/api-road-out/road_anomaly_out/",
+        {
+            method : 'POST',
+            headers : {
+                'Content-Type' : 'application/json',
+            },
+            body : JSON.stringify(GTLJC_outData)
+              }
+          ).catch(err=>console.log(err))
 
-    // const GTLJC_res = await fetch("https://roadanomalyforchrist.pythonanywhere.com/api-road-out/road_anomaly_out/",
-    //           {
-    //             method : 'POST',
-    //             headers : {
-    //                 'Content-Type' : 'application/json',
-    //             },
-    //             body : JSON.stringify(GTLJC_outData)
-    //           }
-    //       ).catch(err=>console.log(err))
-
-    // const GTLJC_resJson = await GTLJC_res.json();
-    // console.log(GTLJC_resJson);
-
+      const GTLJC_resJson = await GTLJC_res.json();
+      console.log(GTLJC_resJson);
+      
+      // console.log(GTLJC_outData);
+      GTLJC_setOutData([]);
+    }
+    GTLJC_setIntervalMilli((new Date).getMilliseconds())
+    
   }
 
-  const [GTLJC_sendData, GTLJC_setSendData] = React.useState(true)
+  const [GTLJC_sendData, GTLJC_setSendData] = React.useState(false)
     useEffect(() => {
       _subscribe();
       GTLJC_getDataIn();
       setInterval(()=>{
         GTLJC_sendData && GTLJC_getDataOut()
-      }, 60000)
+      }, 1000)
       // {GTLJC_sendData && GTLJC_getDataOut();}
       return () => _unsubscribe();
     }, [rot_x]);
@@ -351,26 +385,37 @@ export default function GTLJC_RootIndex(){
 
 
     
+  const [GTLJC_anomalyInIndex, GTLJC_setAnomalyInIndex] = React.useState(0);
+  const [GTLJC_anomalyInIndex_prev, GTLJC_setAnomalyInIndex_prev] = React.useState(GTLJC_anomalyInIndex)
 
-  function GTLJC_handleChangeWithRef(GTLJC_direction){
-      console.log(GTLJC_direction);
-      const GTLJC_newIndex = GTLJC_locationIndex + (GTLJC_direction == "gtljc_next" ? 1 : -1)
-      console.log(GTLJC_newIndex)
-      const GTLJC_nextLocation = GTLJC_markersGoogle[GTLJC_newIndex];
+  function GTLJC_handleChangeWithRef(){
 
-      // Graciously setting camera first to ensure animation happens
-      ref.current?.setCameraPosition({
-          coordinates : {
-              latitude: GTLJC_nextLocation.stores[0].point[0],
-              longitude : GTLJC_nextLocation.stores[0].point[1],
-          },
+    GTLJC_setAnomalyInIndex((GTLJC_prev)=>{
+      if(GTLJC_inData_info){
+        console.log("Gracious anomaly" + GTLJC_anomalyInIndex);
+        return GTLJC_prev < GTLJC_inData_info.length - 1 ? GTLJC_prev + 1 : 0
+      }
+      // return GTLJC_prev
+    })
+   
+    const GTLJC_nextLocation = GTLJC_inData_info && GTLJC_inData_info[GTLJC_anomalyInIndex];
 
-          zoom : 17,
-      });
-      console.log(ref)
+    // Graciously setting camera first to ensure animation happens
+    ref.current?.setCameraPosition({
+        coordinates : {
+            latitude: GTLJC_inData_info[(GTLJC_anomalyInIndex ==( GTLJC_inData_info.length - 1))?0:GTLJC_anomalyInIndex + 1].latitude,
+            longitude : GTLJC_inData_info[(GTLJC_anomalyInIndex ==( GTLJC_inData_info.length - 1))?0:GTLJC_anomalyInIndex + 1].longitude,
+        },
 
-      // Graciously update state after animation is triggered
-      GTLJC_setLocationIndex(GTLJC_newIndex)
+        zoom : 19,
+    });
+    console.log(ref)
+    console.log("Gracious anomaly" + GTLJC_anomalyInIndex)
+
+    GTLJC_getRoute();
+
+    // Graciously update state after animation is triggered
+    // GTLJC_setLocationIndex(GTLJC_newIndex)
 
 
   }
@@ -383,9 +428,30 @@ export default function GTLJC_RootIndex(){
 
           <View style = {styles.controlsContainer} pointerEvents="auto">
               {/* 1 */}
-              <Button title = "GTLJC_Prev" onPress = {() => GTLJC_handleChangeWithRef("gtljc_prev")} />
-              <Button title = "GTLJC_Next" onPress = {()=> GTLJC_handleChangeWithRef("gtljc_next")} />
-          </View>
+              <TouchableOpacity
+                style = {
+                  {
+                    backgroundColor : "skyblue",
+                    padding : 20,
+                    borderRadius : 20,
+                    
+                   
+                  }
+                }
+
+                onPress={()=> GTLJC_handleChangeWithRef()}
+              >
+                <Text style = {{
+                    color : "#2222bb",
+                    fontWeight : 900,
+                    fontStyle : "italic"
+                  }}>
+                      {GTLJC_inData_info[GTLJC_anomalyInIndex] && GTLJC_inData_info[GTLJC_anomalyInIndex].anomaly} 
+                </Text>
+              </TouchableOpacity>
+                
+
+             </View>
       </>
       )
       
@@ -429,7 +495,7 @@ export default function GTLJC_RootIndex(){
                       isIndoorEnabled : true,
                       isMyLocationEnabled : true, // Graciously requires location permission
                       selectionEnabled: true,
-                      // isTrafficEnabled: true,
+                      isTrafficEnabled: true,
                       // minZoomPreference: 21,
                       // maxZoomPreference: 20,
                     }}
@@ -563,3 +629,22 @@ const GTLJC_polylineCoordinates = [
   { latitude: 34.2222, longitude: -118.1234 },
   
 ];
+
+
+{/* <View style={styles.container}>
+      <MapView
+        style={styles.map}
+        initialRegion={{
+          latitude: 7.3775,
+          longitude: 3.9470,
+          latitudeDelta: 0.01,
+          longitudeDelta: 0.01,
+        }}
+      >
+        <Marker
+          coordinate={{ latitude: 7.3775, longitude: 3.9470 }}
+          title="Ibadan"
+          description="This is a marker in Nigeria"
+        />
+      </MapView>
+    </View> */}
