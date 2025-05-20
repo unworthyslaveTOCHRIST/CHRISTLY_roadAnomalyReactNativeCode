@@ -6,8 +6,7 @@ import {Stack} from "expo-router"
 export default function GTLJC_RootLayout(){
     return(
         <Stack>
-            <Stack.Screen name = "index" options = {{title : "Anomaly"}} />
-        
+            <Stack.Screen name = "(tabs)" options = {{headerShown : false}} />      
         </Stack>
     )
 }

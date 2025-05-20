@@ -2,10 +2,11 @@
 import React, { useEffect, useRef,useState } from "react";
 import {Alert, Button, StyleSheet, View, Text, Platform, Image, TouchableOpacity} from "react-native";
 import { AppleMaps, GoogleMaps } from "expo-maps";
-import { GTLJC_locationList } from "../GTLJC_LocationList";
+
 // import { SafeAreaView } from "react-native-safe-area-context";
 import { SafeAreaView } from "react-native";
-import {useBottomTabOverflow} from "../components/ui/TabBarBackground"
+import useBottomTabOverflow from "../../components/ui/TabBarBackground"
+
 import { AppleMapsMapType } from "expo-maps/build/apple/AppleMaps.types";
 import { GoogleMapsMapType } from "expo-maps/build/google/GoogleMaps.types";
 // import { coolDownAsync } from "expo-web-browser";
@@ -24,12 +25,16 @@ let GTLJC_userLocationGlobal = false;
 
   
 export default function GTLJC_RootIndex(){
-    const GTLJC_smoothroadIcon = useImage(require("../assets/images/smooth_FORCHRIST.jpg"))
-    const GTLJC_potholeIcon = useImage(require("../assets/images/pothole_FORCHRIST.jpg"))
-    const GTLJC_crackIcon = useImage(require("../assets/images/crack_FORCHRIST.jpg"))
-    const GTLJC_bumpIcon = useImage(require("../assets/images/bump_FORCHRIST.jpg"))
-    const GTLJC_roadPatchIcon = useImage(require("../assets/images/road_patch_FORCHRISTALONE.png"))
+    const GTLJC_smoothroadIcon = useImage(require("../../assets/images/smooth_FORCHRIST.jpg"))
+    const GTLJC_potholeIcon = useImage(require("../../assets/images/pothole_FORCHRIST.jpg"))
+    const GTLJC_crackIcon = useImage(require("../../assets/images/crack_FORCHRIST.jpg"))
+    const GTLJC_bumpIcon = useImage(require("../../assets/images/bump_FORCHRIST.jpg"))
+    const GTLJC_roadPatchIcon = useImage(require("../../assets/images/road_patch_FORCHRISTALONE.png"))
+    const GTLJC_userLocationIcon = useImage(require("../../assets/images/user_loc_FORCHRISTALONE.png"))
+
     
+
+
     const [GTLJC_routeCoords, GTLJC_setRouteCoords] = React.useState(null);
     const GTLJC_origin = {latitude : 7.3775, longitude : 3.9470}
     const GTLJC_destination = {latitude : 7.3875, longitude : 3.9570}
@@ -43,7 +48,7 @@ export default function GTLJC_RootIndex(){
         const GTLJC_response = await  fetch(GTLJC_url)  // .catch(err=>console.log("GTLJC Error: " +))
         const GTLJC_json = await GTLJC_response.json();
         console.log("Gracious received data : " + JSON.stringify(GTLJC_json) );
-        const GTLJC_points = await Polyline.decode((GTLJC_json.routes[0] && GTLJC_json.routes[0]).overview_polyline.points);
+        const GTLJC_points = await Polyline.decode(GTLJC_json.routes[0] && GTLJC_json.routes[0].overview_polyline.points);
         const GTLJC_coords = GTLJC_points.map(([latitude, longitude])=> ({latitude, longitude}));
         GTLJC_setRouteCoords(GTLJC_coords);
         console.log(GTLJC_routeCoords);
@@ -60,9 +65,18 @@ export default function GTLJC_RootIndex(){
       pothole_mild : GTLJC_potholeIcon,
       pothole_severe : GTLJC_potholeIcon,
       bump : GTLJC_bumpIcon,
-      "road-patch" : GTLJC_roadPatchIcon
+      "road-patch" : GTLJC_roadPatchIcon,
+      user : GTLJC_userLocationIcon
     };
 
+    const GTLJC_icon_urls = {
+      smooth : (require("../../assets/images/smooth_FORCHRIST.jpg")),
+      pothole_mild : (require("../../assets/images/pothole_FORCHRIST.jpg")),
+      crack : (require("../../assets/images/crack_FORCHRIST.jpg")),
+      bump: (require("../../assets/images/bump_FORCHRIST.jpg")),
+      "road-patch" : (require("../../assets/images/road_patch_FORCHRISTALONE.png")),
+      user : (require("../../assets/images/user_loc_FORCHRISTALONE.png"))
+    }
     const GTLJC_bottom = useBottomTabOverflow();
     const [GTLJC_locationIndex, GTLJC_setLocationIndex] = React.useState(0)
     const [GTLJC_userLocation, GTLJC_setUserLocation] = React.useState(null);   
@@ -230,7 +244,7 @@ export default function GTLJC_RootIndex(){
                     snippet : "User Current Location",
                     draggable : true,
                     // showCallout : true,
-                    // icon : "",
+                    icon :GTLJC_icons.user
                     // mapToolbarEnabled : false
 
                   },
@@ -301,7 +315,8 @@ export default function GTLJC_RootIndex(){
       timeToReachAnomaly : "xxxx",
       latitude : GTLJC_item.latitude,
       longitude : GTLJC_item.longitude,
-      location : "xxxx"
+      location : "xxxx",
+      icon_url : GTLJC_icon_urls[GTLJC_item.anomaly],
     }))
     GTLJC_setInDataInfo([
       {
@@ -310,7 +325,8 @@ export default function GTLJC_RootIndex(){
         timeToReachAnomaly : "0",
         latitude : GTLJC_userLocation.latitude,
         longitude : GTLJC_userLocation.longitude,
-        location : "xxxx"
+        location : "xxxx",
+        icon_url : GTLJC_icon_urls.user
     }, 
       ...GTLJC_inDataInfoStructure
     ])
@@ -403,8 +419,8 @@ export default function GTLJC_RootIndex(){
     // Graciously setting camera first to ensure animation happens
     ref.current?.setCameraPosition({
         coordinates : {
-            latitude: GTLJC_inData_info[(GTLJC_anomalyInIndex ==( GTLJC_inData_info.length - 1))?0:GTLJC_anomalyInIndex + 1].latitude,
-            longitude : GTLJC_inData_info[(GTLJC_anomalyInIndex ==( GTLJC_inData_info.length - 1))?0:GTLJC_anomalyInIndex + 1].longitude,
+            latitude:GTLJC_inData_info &&  GTLJC_inData_info[(GTLJC_anomalyInIndex ==( GTLJC_inData_info.length - 1))?0:GTLJC_anomalyInIndex + 1].latitude,
+            longitude : GTLJC_inData_info && GTLJC_inData_info[(GTLJC_anomalyInIndex ==( GTLJC_inData_info.length - 1))?0:GTLJC_anomalyInIndex + 1].longitude,
         },
 
         zoom : 19,
@@ -420,6 +436,17 @@ export default function GTLJC_RootIndex(){
 
   }
 
+  const  GTLJC_seeUserLocation = ()=>{
+     ref.current?.setCameraPosition({
+        coordinates : {
+            latitude:  GTLJC_userLocation &&  GTLJC_userLocation.latitude,
+            longitude : GTLJC_userLocation && GTLJC_userLocation.longitude 
+        },
+
+        zoom : 20,
+    });
+  }
+
   const GTLJC_renderMapControls = () => {
 
       return(
@@ -431,10 +458,36 @@ export default function GTLJC_RootIndex(){
               <TouchableOpacity
                 style = {
                   {
-                    backgroundColor : "skyblue",
+                    backgroundColor : "lightblue",
                     padding : 20,
                     borderRadius : 20,
                     
+                   
+                  }
+                }
+
+                onPress={()=> GTLJC_seeUserLocation()}
+              >
+                <Text style = {{
+                    color : "#212121",
+                    fontWeight : 900,
+                    fontStyle : "italic"
+                  }}>
+                     User Location
+                </Text>
+              </TouchableOpacity>
+
+
+               <TouchableOpacity
+                style = {
+                  {
+                    backgroundColor : "skyblue",
+                    padding : 20,
+                    borderRadius : 20,
+                    marginTop : 15,
+                    display : "flex",
+                    justifyContent : "center",
+                    alignContent : "center"
                    
                   }
                 }
@@ -447,7 +500,36 @@ export default function GTLJC_RootIndex(){
                     fontStyle : "italic"
                   }}>
                       {GTLJC_inData_info[GTLJC_anomalyInIndex] && GTLJC_inData_info[GTLJC_anomalyInIndex].anomaly} 
+                     
                 </Text>
+                <Image
+                  
+                />
+                
+                  <Image
+                    source={GTLJC_inData_info[GTLJC_anomalyInIndex] && GTLJC_inData_info[GTLJC_anomalyInIndex].icon_url} 
+                    style = {{height : 20, width : 20, alignSelf : "center", marginTop : 5}}
+                    
+                  />
+
+                  <Text style = {{
+                    color : "#2222bb",
+                    fontWeight : 900,
+                    fontStyle : "italic"
+                  }}>
+                      Distance To : {GTLJC_inData_info[GTLJC_anomalyInIndex] && GTLJC_inData_info[GTLJC_anomalyInIndex].distanceToAnomaly} 
+                     
+                </Text>
+
+                <Text style = {{
+                    color : "#2222bb",
+                    fontWeight : 900,
+                    fontStyle : "italic"
+                  }}>
+                      Time : {GTLJC_inData_info[GTLJC_anomalyInIndex] && GTLJC_inData_info[GTLJC_anomalyInIndex].timeToReachAnomaly} 
+                     
+                </Text>
+        
               </TouchableOpacity>
                 
 
@@ -483,7 +565,17 @@ export default function GTLJC_RootIndex(){
                   polylines={[
                     {
                       color : "blue",
-                      coordinates : GTLJC_polylineCoordinates,
+                      coordinates : [
+                        {
+                          latitude : GTLJC_userLocation && GTLJC_userLocation.latitude,
+                          longitude : GTLJC_userLocation && GTLJC_userLocation.longitude
+                        },
+                        {
+                          latitude : GTLJC_inData_info[GTLJC_anomalyInIndex] && GTLJC_inData_info[GTLJC_anomalyInIndex].latitude,
+                          longitude : GTLJC_inData_info[GTLJC_anomalyInIndex] && GTLJC_inData_info[GTLJC_anomalyInIndex].longitude,
+                          
+                        }
+                      ],
                       width : 10,
                       // geodesic : true
                     }
@@ -507,9 +599,11 @@ export default function GTLJC_RootIndex(){
 
                     uiSettings={{
                       zoomControlsEnabled : true,
-                      // myLocationButtonEnabled : true,
-                      compassEnabled : true,
-                      mapToolbarEnabled : false
+                      myLocationButtonEnabled : false,
+                      compassEnabled : false,
+                      mapToolbarEnabled : false,
+                      zoomControlsEnabled : false,
+                      
                     }}
 
                     // onPolylineClick={(event) => {
@@ -562,8 +656,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     gap: 8,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    paddingBottom : 20
+    backgroundColor: "rgba(114, 47, 55, 1)",
+    paddingBottom : 20,
+    minHeight : 50
   },
 });
 
@@ -616,17 +711,7 @@ function GTLJC_setUserMarker(){
 const GTLJC_polylineCoordinates = [
   { latitude: 33.8121, longitude: -117.919 }, // Disneyland
   { latitude: 33.837, longitude: -117.912 },
-  { latitude: 33.88, longitude: -117.9 },
-  { latitude: 33.9456, longitude: -117.8735 },
-  { latitude: 34.0, longitude: -117.85 },
-  { latitude: 34.233, longitude: -118.2 },
-  { latitude: 34.2355, longitude: -118.3 },
-  { latitude: 34.1367, longitude: -118.2942 }, // Hollywood
-  { latitude: 34.1341, longitude: -118.3215 }, // Hollywood Sign
-  { latitude: 34.05, longitude: -117.82 },
-  { latitude: 34.1, longitude: -117.78 },
-  { latitude: 34.2, longitude: -118.0 },
-  { latitude: 34.2222, longitude: -118.1234 },
+
   
 ];
 
