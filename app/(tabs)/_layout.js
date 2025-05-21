@@ -2,20 +2,24 @@
 
 import { FontAwesome } from "@expo/vector-icons/FontAwesome";
 import { Tabs, useRouter } from "expo-router";
-// import { useLocalSearchParams } from "expo-router";
+
 import { useEffect } from "react";
 import { Ionicons } from "@expo/vector-icons";
+
+import { GTLJC_SensorProvider } from "../../components/GTLJC_SensorContext";
 
 export default function GTLJC_TabLayout(){
 
     const GTLJC_router = useRouter();
     
     return(
-        <Tabs
+       
+        <GTLJC_SensorProvider>
+                <Tabs
             screenOptions={{
-               tabBarActiveTintColor : "blue",
+                tabBarActiveTintColor : "blue",
                 // tabBarShowLabel : false,
-                 tabBarStyle: {
+                    tabBarStyle: {
                     height: 65,
                     // position: "absolute",
                 },
@@ -49,6 +53,10 @@ export default function GTLJC_TabLayout(){
                 }}
             />
 
-        </Tabs>
+            </Tabs>
+        </GTLJC_SensorProvider>
+        
+ 
+       
     )
 }

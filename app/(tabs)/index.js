@@ -21,7 +21,7 @@ import { useCallback } from "react";
 
 // import MapView,{Marker} from "react-native-maps"
 
-import { useLocalSearchParams } from "expo-router";
+import { useSensor } from "../../components/GTLJC_SensorContext";
 
 
 
@@ -76,7 +76,7 @@ export default function GTLJC_RootIndex(){
 
     useFocusEffect(
       useCallback(() => {
-        setTimeout(()=>{
+      
           console.log("🔁 Screen focused: rerunning everything");
           const GTLJC_getLocation = async ()=>{
 
@@ -105,10 +105,23 @@ export default function GTLJC_RootIndex(){
                 zoom : 17
               })
 
+           
               
-          
           }
 
+          
+            GTLJC_setAnomalyInIndex(0);
+              
+            GTLJC_setInDataInfo({                
+                anomaly : "User Location" + " (next) ==>",
+                distanceToAnomaly : "0",
+                timeToReachAnomaly : "0",
+                latitude : GTLJC_userLocation && GTLJC_userLocation.latitude,
+                longitude : GTLJC_userLocation &&  GTLJC_userLocation.longitude,
+                location : "xxxx",
+                icon_url : GTLJC_icon_urls.user           
+             });
+             
             GTLJC_getLocation();
 
             return () => {
@@ -116,7 +129,7 @@ export default function GTLJC_RootIndex(){
               setIsFocused(false);
             };
 
-        },3000)
+        
         
 
       }, [])
@@ -187,7 +200,9 @@ export default function GTLJC_RootIndex(){
     const [GTLJC_intervalMilli, GTLJC_setIntervalMilli] = React.useState((new Date).getMilliseconds())
     const [GTLJC_repeatDet, GTLJC_setRepeatTimer] = React.useState(0)
 
-    const [{ acc_x, acc_y, acc_z}, GTLJC_setData] = useState({
+    
+
+    const [{ acc_x, acc_y, acc_z}, GTLJC_setData_acc] = useState({
     acc_x: 0,
     acc_y: 0,
     acc_z: 0,
@@ -200,30 +215,36 @@ export default function GTLJC_RootIndex(){
     rot_z: 0,
   });
 
+
   const [subscription, setSubscription] = useState(null);
   const [subscription_gyr, setSubscription_gyr] = useState(null);
 
   Accelerometer.setUpdateInterval(5000);
   Gyroscope.setUpdateInterval(30);
 
+
+  const {GTLJC_acceleration, GTLJC_setAcceleration, GTLJC_rotation, GTLJC_setRotation} = useSensor();
   const _subscribe = () => {
     setSubscription(Accelerometer.addListener( accelerometerData =>
-      GTLJC_setData({
-        acc_x : accelerometerData.x,
-        acc_y : accelerometerData.y,
-        acc_z : accelerometerData.z
-      })
+      {
+          GTLJC_setAcceleration({
+            acc_x : accelerometerData.x,
+            acc_y : accelerometerData.y,
+            acc_z : accelerometerData.z
+          })
     
+      }
     ));
     setSubscription_gyr(
-      Gyroscope.addListener(gyroScopeData =>{
-        GTLJC_setData_gyr({
-          rot_x : gyroScopeData.x * 9.81,
-          rot_y : gyroScopeData.y * 9.81,
-          rot_z : gyroScopeData.z * 9.81
-        } )
-      })
-    )
+      Gyroscope.addListener(gyroScopeData =>
+        {
+            GTLJC_setRotation({
+              rot_x : gyroScopeData.x,
+              rot_y : gyroScopeData.y,
+              rot_z : gyroScopeData.z
+            })
+        }
+    ))
   };
 
   
@@ -299,7 +320,10 @@ export default function GTLJC_RootIndex(){
                 
               // console.log(JSON.stringify(GTLJC_inDataMapped))
             
-               GTLJC_setMarkersGoogle([
+               GTLJC_setMarkersGoogle((GTLJC_prev)=>{
+                
+
+                return ([
                   {
                     coordinates : {
                       latitude : GTLJC_userLocation.latitude,
@@ -316,13 +340,14 @@ export default function GTLJC_RootIndex(){
                   ...GTLJC_inDataMapped
        
                 ])
-
+             })
+                
                 // console.log("Gracious user location: " + GTLJC_userLocation.latitude)
-            }         
+          }         
             
 
         }
-  ,[rot_x])
+  ,[GTLJC_rotation.rot_x])
 
   useEffect(()=>{
     let GTLJC_subscription = null;
@@ -364,7 +389,7 @@ export default function GTLJC_RootIndex(){
         GTLJC_subscription.remove();
       }
     };
-  },[rot_x])
+  },[GTLJC_rotation.rot_x])
 
 
   const GTLJC_getDataIn = async ()=>{
@@ -501,6 +526,7 @@ export default function GTLJC_RootIndex(){
 
   }
 
+  const [GTLJC_userLocationReceived, GTLJC_setUserLocationReceived] = React.useState(true)
   const  GTLJC_seeUserLocation = ()=>{
      ref.current?.setCameraPosition({
         coordinates : {
@@ -511,6 +537,9 @@ export default function GTLJC_RootIndex(){
         zoom : 20,
     });
   }
+
+  
+  
 
   const GTLJC_renderMapControls = () => {
 
