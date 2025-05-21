@@ -5,7 +5,7 @@ import { AppleMaps, GoogleMaps } from "expo-maps";
 
 // import { SafeAreaView } from "react-native-safe-area-context";
 import { SafeAreaView } from "react-native";
-import useBottomTabOverflow from "../../components/ui/TabBarBackground"
+
 
 import { AppleMapsMapType } from "expo-maps/build/apple/AppleMaps.types";
 import { GoogleMapsMapType } from "expo-maps/build/google/GoogleMaps.types";
@@ -15,16 +15,24 @@ import { Accelerometer, Gyroscope } from 'expo-sensors';
 import {useImage} from "expo-image";
 import Polyline from "@mapbox/polyline"
 
+import { useFocusEffect } from "@react-navigation/native";
+
+import { useCallback } from "react";
+
 // import MapView,{Marker} from "react-native-maps"
 
+import { useLocalSearchParams } from "expo-router";
 
 
-const GTLJC_SF_ZOOM = 12;
 
-let GTLJC_userLocationGlobal = false;
+
 
   
 export default function GTLJC_RootIndex(){
+    console.log("Graciously re rendering GTLJC_Index in whole");
+
+    const GTLJC_SF_ZOOM = 12;
+
     const GTLJC_smoothroadIcon = useImage(require("../../assets/images/smooth_FORCHRIST.jpg"))
     const GTLJC_potholeIcon = useImage(require("../../assets/images/pothole_FORCHRIST.jpg"))
     const GTLJC_crackIcon = useImage(require("../../assets/images/crack_FORCHRIST.jpg"))
@@ -32,7 +40,12 @@ export default function GTLJC_RootIndex(){
     const GTLJC_roadPatchIcon = useImage(require("../../assets/images/road_patch_FORCHRISTALONE.png"))
     const GTLJC_userLocationIcon = useImage(require("../../assets/images/user_loc_FORCHRISTALONE.png"))
 
-    
+    // const GTLJC_params = useLocalSearchParams();
+
+    // useEffect(()=>{
+    //     console.log("Graciously useeffect has been triggered by route params: ", GTLJC_params.t)
+        
+    // },[GTLJC_params.t])
 
 
     const [GTLJC_routeCoords, GTLJC_setRouteCoords] = React.useState(null);
@@ -59,6 +72,56 @@ export default function GTLJC_RootIndex(){
 
     }
 
+    const [isFocused, setIsFocused] = useState(false);
+
+    useFocusEffect(
+      useCallback(() => {
+        setTimeout(()=>{
+          console.log("🔁 Screen focused: rerunning everything");
+          const GTLJC_getLocation = async ()=>{
+
+              const GTLJC_status = await Location.requestForegroundPermissionsAsync()
+              if (GTLJC_status !== "granted") {
+                "";
+              }
+
+              const GTLJC_location = await Location.getCurrentPositionAsync({});
+              console.log(GTLJC_location);
+
+              ref.current?.setCameraPosition({
+                  coordinates :{
+                    latitude : GTLJC_location.coords.latitude,
+                    longitude : GTLJC_location.coords.longitude
+                },
+                  zoom : 17,
+              });
+              console.log(ref)
+
+              GTLJC_setUserLocation({
+                coordinates :{
+                  latitude : GTLJC_location.coords.latitude,
+                  longitude : GTLJC_location.coords.longitude
+                },
+                zoom : 17
+              })
+
+              
+          
+          }
+
+            GTLJC_getLocation();
+
+            return () => {
+              console.log("👋 Unfocused, cleanup if needed");
+              setIsFocused(false);
+            };
+
+        },3000)
+        
+
+      }, [])
+    );
+
     const GTLJC_icons = {
       smooth : GTLJC_smoothroadIcon,
       crack : GTLJC_crackIcon,
@@ -77,7 +140,7 @@ export default function GTLJC_RootIndex(){
       "road-patch" : (require("../../assets/images/road_patch_FORCHRISTALONE.png")),
       user : (require("../../assets/images/user_loc_FORCHRISTALONE.png"))
     }
-    const GTLJC_bottom = useBottomTabOverflow();
+ 
     const [GTLJC_locationIndex, GTLJC_setLocationIndex] = React.useState(0)
     const [GTLJC_userLocation, GTLJC_setUserLocation] = React.useState(null);   
     const [GTLJC_markersGoogle, GTLJC_setMarkersGoogle] = React.useState([]);
@@ -163,6 +226,7 @@ export default function GTLJC_RootIndex(){
     )
   };
 
+  
   const _unsubscribe = () => {
     subscription && subscription.remove();
     subscription_gyr && subscription_gyr.remove();
@@ -173,6 +237,7 @@ export default function GTLJC_RootIndex(){
   React.useEffect(()=>{
     setTimeout(
       ()=>{
+    
           const GTLJC_getLocation = async ()=>{
 
             const GTLJC_status = await Location.requestForegroundPermissionsAsync()
@@ -238,13 +303,13 @@ export default function GTLJC_RootIndex(){
                   {
                     coordinates : {
                       latitude : GTLJC_userLocation.latitude,
-                      longitude : GTLJC_userLocation.longitude
+                      longitude :   GTLJC_userLocation.longitude
                     },
                     title : "User Current Location ",
                     snippet : "User Current Location",
                     draggable : true,
                     // showCallout : true,
-                    icon :GTLJC_icons.user
+                    icon :GTLJC_icons.user,
                     // mapToolbarEnabled : false
 
                   },
@@ -271,7 +336,7 @@ export default function GTLJC_RootIndex(){
       GTLJC_subscription = await Location.watchPositionAsync(
         {
           accuracy : Location.Accuracy.Higest,
-          timeInterval : 100,
+          timeInterval : 0,
           distanceInterval : 0 // To graciously update regardless of movement
         },
         (GTLJC_newLocation)=>{
@@ -323,8 +388,8 @@ export default function GTLJC_RootIndex(){
         anomaly : "User Location" + " (next) ==>",
         distanceToAnomaly : "0",
         timeToReachAnomaly : "0",
-        latitude : GTLJC_userLocation.latitude,
-        longitude : GTLJC_userLocation.longitude,
+        latitude : GTLJC_userLocation && GTLJC_userLocation.latitude,
+        longitude : GTLJC_userLocation &&  GTLJC_userLocation.longitude,
         location : "xxxx",
         icon_url : GTLJC_icon_urls.user
     }, 
@@ -733,3 +798,5 @@ const GTLJC_polylineCoordinates = [
         />
       </MapView>
     </View> */}
+
+    
