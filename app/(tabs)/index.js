@@ -31,7 +31,7 @@ import { useSensor } from "../../components/GTLJC_SensorContext";
 
   
 export default function GTLJC_RootIndex(){
-    console.log("Graciously re rendering GTLJC_Index in whole");
+    // console.log("Graciously re rendering GTLJC_Index in whole");
 
     const GTLJC_SF_ZOOM = 12;
 
@@ -78,6 +78,8 @@ export default function GTLJC_RootIndex(){
 
     useFocusEffect(
       useCallback(() => {
+        GTLJC_setAnomalyInIndex(0);
+
         setTimeout(()=>{
           console.log("🔁 Screen focused: rerunning everything");
           const GTLJC_getLocation = async ()=>{
@@ -112,28 +114,15 @@ export default function GTLJC_RootIndex(){
           }
 
             GTLJC_getLocation();
-            
-            GTLJC_setAnomalyInIndex(0);
 
-             GTLJC_setInDataInfo({
-              anomaly : "User Location" + " (next) ==>",
-              distanceToAnomaly : "0",
-              timeToReachAnomaly : "0",
-              latitude : GTLJC_userLocation && GTLJC_userLocation.latitude,
-              longitude : GTLJC_userLocation &&  GTLJC_userLocation.longitude,
-              location : "xxxx",
-              icon_url : GTLJC_icon_urls.user
-          },
-        )
-
-            GTLJC_getDataIn();
+            // GTLJC_getDataIn();
 
             return () => {
               console.log("👋 Unfocused, cleanup if needed");
               setIsFocused(false);
             };
 
-        },1000)
+        },3000)
         
 
       }, [])
@@ -259,45 +248,6 @@ export default function GTLJC_RootIndex(){
     setSubscription_gyr(null);
   };
 
-  React.useEffect(()=>{
-    setTimeout(
-      ()=>{
-    
-          const GTLJC_getLocation = async ()=>{
-
-            const GTLJC_status = await Location.requestForegroundPermissionsAsync()
-            if (GTLJC_status !== "granted") {
-              "";
-            }
-
-            const GTLJC_location = await Location.getCurrentPositionAsync({});
-            console.log(GTLJC_location);
-
-            ref.current?.setCameraPosition({
-                coordinates :{
-                  latitude : GTLJC_location.coords.latitude,
-                  longitude : GTLJC_location.coords.longitude
-              },
-                zoom : 17,
-            });
-            console.log(ref)
-
-            GTLJC_setUserLocation({
-              coordinates :{
-                latitude : GTLJC_location.coords.latitude,
-                longitude : GTLJC_location.coords.longitude
-              },
-              zoom : 17
-            })
-
-            
-         
-          }
-
-        GTLJC_getLocation();
-      },3000)      
-
-  },[])
 
 
   useEffect(
@@ -361,7 +311,7 @@ export default function GTLJC_RootIndex(){
       GTLJC_subscription = await Location.watchPositionAsync(
         {
           accuracy : Location.Accuracy.Higest,
-          timeInterval : 0,
+          timeInterval : 500,
           distanceInterval : 0 // To graciously update regardless of movement
         },
         (GTLJC_newLocation)=>{
@@ -375,7 +325,7 @@ export default function GTLJC_RootIndex(){
 
            GTLJC_setUserLocation(GTLJC_newLocation.coords)
 
-          // console.log(GTLJC_newLocation.coords);
+          console.log(GTLJC_newLocation.coords);
           // console.log(ref)
         }     
       )  
@@ -389,7 +339,7 @@ export default function GTLJC_RootIndex(){
         GTLJC_subscription.remove();
       }
     };
-  },[GTLJC_rotation.rot_x])
+  },[])
 
 
   const GTLJC_getDataIn = async ()=>{
@@ -477,16 +427,17 @@ export default function GTLJC_RootIndex(){
     
   }
 
-  const [GTLJC_sendData, GTLJC_setSendData] = React.useState(false)
-    useEffect(() => {
-      _subscribe();
-      GTLJC_getDataIn();
-      setInterval(()=>{
-        GTLJC_sendData && GTLJC_getDataOut()
-      }, 1000)
-      // {GTLJC_sendData && GTLJC_getDataOut();}
-      return () => _unsubscribe();
-    }, [rot_x]);
+  const [GTLJC_sendData, GTLJC_setSendData] = React.useState(false);
+
+  useEffect(() => {
+    _subscribe();
+    GTLJC_getDataIn();
+    // setInterval(()=>{
+    //   GTLJC_sendData && GTLJC_getDataOut()
+    // }, 1000)
+    // {GTLJC_sendData && GTLJC_getDataOut();}
+    return () => _unsubscribe();
+  }, [GTLJC_rotation.rot_x]);
 
 
 
