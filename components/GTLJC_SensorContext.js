@@ -18,8 +18,11 @@ export const GTLJC_SensorProvider = ({children}) => {
     const [GTLJC_latitude, GTLJC_setLatitude] = React.useState(0) 
     const [GTLJC_longitude, GTLJC_setLongitude] = React.useState(0) 
     const [GTLJC_accuracy, GTLJC_setAccuracy] = React.useState(0) 
-    
-    
+    const [GTLJC_xData, GTLJC_setXData] = useState([0,0]);
+    const [GTLJC_yData, GTLJC_setYData] = useState([0,0]);
+    const [GTLJC_zData, GTLJC_setZData] = useState([0,0]);
+
+
     return(
         <GTLJC_SensorContext_.Provider 
         value = {{
@@ -32,7 +35,10 @@ export const GTLJC_SensorProvider = ({children}) => {
                 GTLJC_speed, GTLJC_setSpeed,
                 GTLJC_latitude, GTLJC_setLatitude,
                 GTLJC_longitude, GTLJC_setLongitude,
-                GTLJC_accuracy, GTLJC_setAccuracy
+                GTLJC_accuracy, GTLJC_setAccuracy,
+                GTLJC_xData, GTLJC_setXData,
+                GTLJC_yData, GTLJC_setYData,
+                GTLJC_zData, GTLJC_setZData
             }} 
         >
             {children}

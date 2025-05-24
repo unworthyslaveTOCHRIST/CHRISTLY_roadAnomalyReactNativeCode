@@ -25,8 +25,10 @@ import { useLocalSearchParams } from "expo-router";
 
 import { useSensor } from "../../components/GTLJC_SensorContext";
 
+// import Geolocation from "react-native-geolocation-service"
 
-
+// const GTLJC_status = await Location.requestForegroundPermissionsAsync();
+            
 
 
   
@@ -117,6 +119,49 @@ export default function GTLJC_RootIndex(){
 
             // GTLJC_getDataIn();
 
+            if (GTLJC_userLocation && GTLJC_inData) {
+              //  console.log("Gracious user location set globally: ", GTLJC_userLocation);
+
+              const GTLJC_inDataMapped = GTLJC_inData && GTLJC_inData.map((GTLJC_item)=>{
+
+                    return(
+                        
+                      {
+                        coordinates : {
+                          latitude : GTLJC_item.latitude,
+                          longitude : GTLJC_item.longitude
+                        },
+                        title : GTLJC_item.anomaly.toUpperCase(),
+                        snippet : GTLJC_item.anomaly,
+                        draggable : true,
+                        icon : GTLJC_icons[GTLJC_item.anomaly]
+                      }
+                    )
+                  })
+                
+              // console.log(JSON.stringify(GTLJC_inDataMapped))
+            
+               GTLJC_setMarkersGoogle([
+                  {
+                    coordinates : {
+                      latitude : GTLJC_userLocation.latitude,
+                      longitude :   GTLJC_userLocation.longitude
+                    },
+                    title : "User Current Location ",
+                    snippet : "User Current Location",
+                    draggable : true,
+                    // showCallout : true,
+                    icon :GTLJC_icons.user,
+                    // mapToolbarEnabled : false
+
+                  },
+                  // ...GTLJC_inDataMapped
+       
+                ])
+
+                // console.log("Gracious user location: " + GTLJC_userLocation.latitude)
+            }        
+
             return () => {
               console.log("👋 Unfocused, cleanup if needed");
               setIsFocused(false);
@@ -171,12 +216,12 @@ export default function GTLJC_RootIndex(){
     const [GTLJC_inData_info, GTLJC_setInDataInfo] = React.useState([])
     const [GTLJC_outData, GTLJC_setOutData] = React.useState([{
         batch_id : 0,
-        acc_x,
-        acc_y,
-        acc_z,
-        rot_x,
-        rot_y,
-        rot_z,
+        acc_x : 0,
+        acc_y : 0,
+        acc_z : 0,
+        rot_x : 0,
+        rot_y : 0,
+        rot_z : 0,
         speed : 0,
         log_interval : 0,
         latitude : 0,
@@ -189,23 +234,11 @@ export default function GTLJC_RootIndex(){
     
     const [GTLJC_repeatDet, GTLJC_setRepeatTimer] = React.useState(0)
 
-    const [{ acc_x, acc_y, acc_z}, GTLJC_setData] = useState({
-    acc_x: 0,
-    acc_y: 0,
-    acc_z: 0,
-  });
-
-
-  const [{ rot_x, rot_y, rot_z}, GTLJC_setData_gyr] = useState({
-    rot_x: 0,
-    rot_y: 0,
-    rot_z: 0,
-  });
 
   const [subscription, setSubscription] = useState(null);
   const [subscription_gyr, setSubscription_gyr] = useState(null);
 
-  Accelerometer.setUpdateInterval(5000);
+  Accelerometer.setUpdateInterval(500);
   Gyroscope.setUpdateInterval(30);
 
   const {
@@ -218,26 +251,32 @@ export default function GTLJC_RootIndex(){
                 GTLJC_speed, GTLJC_setSpeed,
                 GTLJC_latitude, GTLJC_setLatitude,
                 GTLJC_longitude, GTLJC_setLongitude,
-                GTLJC_accuracy, GTLJC_setAccuracy
+                GTLJC_accuracy, GTLJC_setAccuracy,
+                GTLJC_xData, GTLJC_setXData,
+                GTLJC_yData, GTLJC_setYData,
+                GTLJC_zData, GTLJC_setZData
+
             } = useSensor();
   const _subscribe = () => {
     setSubscription(Accelerometer.addListener( accelerometerData =>
       GTLJC_setAcceleration({
-        acc_x : accelerometerData.x,
-        acc_y : accelerometerData.y,
-        acc_z : accelerometerData.z
+        acc_x : accelerometerData.x * 9.81,
+        acc_y : accelerometerData.y * 9.81,
+        acc_z : accelerometerData.z * 9.81
       })
     
     ));
     setSubscription_gyr(
       Gyroscope.addListener(gyroScopeData =>{
         GTLJC_setRotation({
-          rot_x : gyroScopeData.x * 9.81,
-          rot_y : gyroScopeData.y * 9.81,
-          rot_z : gyroScopeData.z * 9.81
+          rot_x : gyroScopeData.x,
+          rot_y : gyroScopeData.y,
+          rot_z : gyroScopeData.z 
         } )
       })
-    )
+    );
+
+    
   };
 
   
@@ -323,7 +362,12 @@ export default function GTLJC_RootIndex(){
           //     zoom :10,
           // });
 
-           GTLJC_setUserLocation(GTLJC_newLocation.coords)
+          GTLJC_setSpeed(GTLJC_newLocation.coords.speed);
+          GTLJC_setLatitude(GTLJC_newLocation.coords.latitude);
+          GTLJC_setLongitude(GTLJC_newLocation.coords.longitude);
+          GTLJC_setAccuracy(GTLJC_newLocation.coords.accuracy);
+          
+          GTLJC_setUserLocation(GTLJC_newLocation.coords)
 
           console.log(GTLJC_newLocation.coords);
           // console.log(ref)
@@ -342,7 +386,7 @@ export default function GTLJC_RootIndex(){
   },[])
 
 
-  const GTLJC_getDataIn = async ()=>{
+const GTLJC_getDataIn = async ()=>{
 
     GTLJC_setRepeatTimer(GTLJC_prev=>GTLJC_prev + 1);
     const GTLJC_res = await fetch("https://roadanomalyforchrist.pythonanywhere.com/api-road-in/road_anomaly_in/").catch(err=>console.log(err))
@@ -382,12 +426,12 @@ export default function GTLJC_RootIndex(){
       ...GTLJC_prev,
       {
         batch_id : GTLJC_batchId,
-        acc_x,
-        acc_y,
-        acc_z,
-        rot_x,
-        rot_y,
-        rot_z,
+        acc_x : GTLJC_acceleration.acc_x,
+        acc_y : GTLJC_acceleration.acc_y,
+        acc_z : GTLJC_acceleration.acc_z,
+        rot_x : GTLJC_rotation.rot_x,
+        rot_y : GTLJC_rotation.rot_y,
+        rot_z : GTLJC_rotation.rot_z,
         speed : GTLJC_userLocation && GTLJC_userLocation.speed,
         timestamp : GTLJC_date,
         log_interval : GTLJC_intervalMilli,
@@ -400,25 +444,20 @@ export default function GTLJC_RootIndex(){
   );
     if (GTLJC_counter >= 59){
       GTLJC_setCounter(0);
-      GTLJC_setbatchId((GTLJC_prev)=> GTLJC_prev + 1);
+      GTLJC_setBatchId((GTLJC_prev)=> GTLJC_prev + 1);
 
-      // async ()=>{
-      //   GTLJC_outData.forEach(GTLJC_log=>{
-          
-      //   })
-      // }
-      const GTLJC_res = await fetch("https://roadanomalyforchrist.pythonanywhere.com/api-road-out/road_anomaly_out/",
-        {
-            method : 'POST',
-            headers : {
-                'Content-Type' : 'application/json',
-            },
-            body : JSON.stringify(GTLJC_outData)
-              }
-          ).catch(err=>console.log(err))
+      // const GTLJC_res = await fetch("https://roadanomalyforchrist.pythonanywhere.com/api-road-out/road_anomaly_out/",
+      //   {
+      //       method : 'POST',
+      //       headers : {
+      //           'Content-Type' : 'application/json',
+      //       },
+      //       body : JSON.stringify(GTLJC_outData)
+      //         }
+      //     ).catch(err=>console.log(err))
 
-      const GTLJC_resJson = await GTLJC_res.json();
-      console.log(GTLJC_resJson);
+      // const GTLJC_resJson = await GTLJC_res.json();
+      // console.log(GTLJC_resJson);
       
       // console.log(GTLJC_outData);
       GTLJC_setOutData([]);
@@ -427,7 +466,7 @@ export default function GTLJC_RootIndex(){
     
   }
 
-  const [GTLJC_sendData, GTLJC_setSendData] = React.useState(false);
+  const [GTLJC_sendData, GTLJC_setSendData] = React.useState(true);
 
   useEffect(() => {
     _subscribe();
@@ -435,16 +474,15 @@ export default function GTLJC_RootIndex(){
     // setInterval(()=>{
     //   GTLJC_sendData && GTLJC_getDataOut()
     // }, 1000)
-    // {GTLJC_sendData && GTLJC_getDataOut();}
-    return () => _unsubscribe();
+    {GTLJC_sendData && GTLJC_getDataOut();}
+   return () => _unsubscribe();
   }, [GTLJC_rotation.rot_x]);
 
 
 
     
   const [GTLJC_anomalyInIndex, GTLJC_setAnomalyInIndex] = React.useState(0);
-  const [GTLJC_anomalyInIndex_prev, GTLJC_setAnomalyInIndex_prev] = React.useState(GTLJC_anomalyInIndex)
-
+ 
   function GTLJC_handleChangeWithRef(){
 
     GTLJC_setAnomalyInIndex((GTLJC_prev)=>{
@@ -712,43 +750,6 @@ function GTLJC_setUserMarker(){
   return  { latitude: 49.268034, longitude: -123.154819 }
 }
 
-// const markersApple = [
-//   {
-//     coordinates: { latitude: 49.259133, longitude: -123.10079 },
-//     title: "49th Parallel Café & Lucky's Doughnuts - Main Street",
-//     tintColor: "brown",
-//     systemImage: "cup.and.saucer.fill",
-//   },
-//   {
-//     coordinates: { latitude: 49.268034, longitude: -123.154819 },
-//     title: "49th Parallel Café & Lucky's Doughnuts - 4th Ave",
-//     tintColor: "brown",
-//     systemImage: "cup.and.saucer.fill",
-//   },
-//   {
-//     coordinates: { latitude: 49.286036, longitude: -123.12303 },
-//     title: "49th Parallel Café & Lucky's Doughnuts - Thurlow",
-//     tintColor: "brown",
-//     systemImage: "cup.and.saucer.fill",
-//   },
-//   {
-//     coordinates: { latitude: 49.311879, longitude: -123.079241 },
-//     title: "49th Parallel Café & Lucky's Doughnuts - Lonsdale",
-//     tintColor: "brown",
-//     systemImage: "cup.and.saucer.fill",
-//   },
-//   {
-//     coordinates: {
-//       latitude: 49.27235336018808,
-//       longitude: -123.13455838338278,
-//     },
-//     title: "A La Mode Pie Café - Granville Island",
-//     tintColor: "orange",
-//     systemImage: "fork.knife",
-//   },
-// ];
-
-
 const GTLJC_polylineCoordinates = [
   { latitude: 33.8121, longitude: -117.919 }, // Disneyland
   { latitude: 33.837, longitude: -117.912 },
@@ -757,22 +758,6 @@ const GTLJC_polylineCoordinates = [
 ];
 
 
-{/* <View style={styles.container}>
-      <MapView
-        style={styles.map}
-        initialRegion={{
-          latitude: 7.3775,
-          longitude: 3.9470,
-          latitudeDelta: 0.01,
-          longitudeDelta: 0.01,
-        }}
-      >
-        <Marker
-          coordinate={{ latitude: 7.3775, longitude: 3.9470 }}
-          title="Ibadan"
-          description="This is a marker in Nigeria"
-        />
-      </MapView>
-    </View> */}
+
 
     

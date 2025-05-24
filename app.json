@@ -46,6 +46,16 @@
           "requestLocationPermission": "true",
           "locationPermission": "Allow $(PRODUCT_NAME) to use your location"
         }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "extraDependencies": [
+              "com.google.android.gms:play-services-location:21.0.1"
+            ]
+          }
+        }
       ]
     ],
     "experiments": {
