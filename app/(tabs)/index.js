@@ -664,7 +664,7 @@ const GTLJC_getDataIn = async ()=>{
                       mapType : GoogleMapsMapType.NORMAL,
                       isBuildingEnabled : true,
                       isIndoorEnabled : true,
-                      isMyLocationEnabled : true, // Graciously requires location permission
+                      // isMyLocationEnabled : true, // Graciously requires location permission
                       selectionEnabled: true,
                       isTrafficEnabled: true,
                       // minZoomPreference: 21,
