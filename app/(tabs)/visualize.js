@@ -60,7 +60,7 @@ export default function GTLJC_TabVisualize() {
       };
       setLogData(prev => [...prev, entry]);
       GTLJC_setCounter(prev => prev + 1);
-      GTLJC_setIntervalMilli(new Date().getMilliseconds());
+      GTLJC_setIntervalMilli((GTLJC_prev)=> (new Date().getMilliseconds() - GTLJC_prev));
       GTLJC_setDate(new Date().toISOString());
       counter++;
     }, 250);
@@ -78,10 +78,12 @@ export default function GTLJC_TabVisualize() {
     return `${headers}\n${rows}`;
   };
 
+  const [GTLJC_logNo, GTLJC_setLogNo] = useState(0);
   const shareLogs = async (sendToServer = false) => {
     try {
       setIsPreparing(true);
-      const fileName = `anomalies_log.csv_`+(new Date).toISOString();
+      GTLJC_setLogNo((GTLJC_prev)=>GTLJC_prev + 1);
+      const fileName = `anomalies_log${GTLJC_logNo + 1}.csv`;
       const fileUri = FileSystem.documentDirectory + fileName;
       const csvContent = formatCSV(logData);
       await FileSystem.writeAsStringAsync(fileUri, csvContent, {
@@ -120,6 +122,7 @@ export default function GTLJC_TabVisualize() {
       <Text>Christly latitude: {GTLJC_latitude}</Text>
       <Text>Christly longitude: {GTLJC_longitude}</Text>
       <Text>Christly accuracy: {GTLJC_accuracy}</Text>
+      <Text>Christly Log No: {GTLJC_logNo}</Text> GTLJC_logNo
 
       {isPreparing && (
         <View style={{ marginVertical: 10 }}>
