@@ -442,9 +442,9 @@ const GTLJC_getDataIn = async ()=>{
      }
     ]
   );
-    if (GTLJC_counter >= 59){
-      GTLJC_setCounter(0);
-      GTLJC_setBatchId((GTLJC_prev)=> GTLJC_prev + 1);
+    // if (GTLJC_counter >= 59){
+      // GTLJC_setCounter(0);
+      // GTLJC_setBatchId((GTLJC_prev)=> GTLJC_prev + 1);
 
       // const GTLJC_res = await fetch("https://roadanomalyforchrist.pythonanywhere.com/api-road-out/road_anomaly_out/",
       //   {
@@ -460,8 +460,8 @@ const GTLJC_getDataIn = async ()=>{
       // console.log(GTLJC_resJson);
       
       // console.log(GTLJC_outData);
-      GTLJC_setOutData([]);
-    }
+      // GTLJC_setOutData([]);
+    // }
     GTLJC_setIntervalMilli((new Date).getMilliseconds())
     
   }
@@ -474,7 +474,7 @@ const GTLJC_getDataIn = async ()=>{
     // setInterval(()=>{
     //   GTLJC_sendData && GTLJC_getDataOut()
     // }, 1000)
-    {GTLJC_sendData && GTLJC_getDataOut();}
+    // {GTLJC_sendData && GTLJC_getDataOut();}
    return () => _unsubscribe();
   }, [GTLJC_rotation.rot_x]);
 

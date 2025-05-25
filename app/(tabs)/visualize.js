@@ -81,7 +81,7 @@ export default function GTLJC_TabVisualize() {
   const shareLogs = async (sendToServer = false) => {
     try {
       setIsPreparing(true);
-      const fileName = `anomalies_log.csv`;
+      const fileName = `anomalies_log.csv_`+(new Date).toISOString();
       const fileUri = FileSystem.documentDirectory + fileName;
       const csvContent = formatCSV(logData);
       await FileSystem.writeAsStringAsync(fileUri, csvContent, {
@@ -154,12 +154,13 @@ export default function GTLJC_TabVisualize() {
 
       <View style={styles.row}>
         <TouchableOpacity style={styles.button} onPress={() => shareLogs(true)}>
-          <MaterialIcons name="share" size={20} color="white" />
+          <Feather name="send" size={20} color="white" />
+          
           <Text style={styles.buttonText}>Share + Send</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.button} onPress={() => shareLogs(false)}>
-          <Feather name="send" size={20} color="white" />
+          <MaterialIcons name="share" size={20} color="white" />
           <Text style={styles.buttonText}>Share Only</Text>
         </TouchableOpacity>
       </View>
