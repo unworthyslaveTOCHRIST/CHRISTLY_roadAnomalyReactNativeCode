@@ -7,11 +7,12 @@ import * as Sharing from "expo-sharing";
 import { useSensor } from "../../components/GTLJC_SensorContext";
 import { useFocusEffect } from "expo-router";
 import { Feather, MaterialIcons } from "@expo/vector-icons";
+import { Accelerometer,Gyroscope } from "expo-sensors";
 
 export default function GTLJC_TabVisualize() {
   const {
-    GTLJC_acceleration,
-    GTLJC_rotation,
+    GTLJC_acceleration, GTLJC_setAcceleration,
+    GTLJC_rotation, GTLJC_setRotation,
     GTLJC_batchId,
     GTLJC_setBatchId,
     GTLJC_date,
@@ -23,13 +24,21 @@ export default function GTLJC_TabVisualize() {
     GTLJC_speed,
     GTLJC_latitude,
     GTLJC_longitude,
-    GTLJC_accuracy
+    GTLJC_accuracy,
+    GTLJC_accelRef, GTLJC_gyroRef,
+    GTLJC_sampleRate, GTLJC_setSampleRate,
+    GTLJC_latitudeRef, GTLJC_longitudeRef,
+    GTLJC_speedRef, GTLJC_gpsAccuracyRef
+
   } = useSensor();
+
 
   const [logData, setLogData] = useState([]);
   const [isPreparing, setIsPreparing] = useState(false);
   const [collecting, setCollecting] = useState(false);
   const [resetTrigger, setResetTrigger] = useState(false);
+
+
 
   const collectAnomalyLogs = () => {
     if (collecting) return;
@@ -42,17 +51,18 @@ export default function GTLJC_TabVisualize() {
         GTLJC_setCounter(0);
         GTLJC_setBatchId(prev => prev + 1);
         return;
-      }
+      } 
+    
+
+      const { acc_x, acc_y, acc_z } = GTLJC_accelRef.current;
+      const { rot_x, rot_y, rot_z } = GTLJC_gyroRef.current;
+
       const entry = {
         batch_id: GTLJC_batchId,
-        acc_x: GTLJC_acceleration.acc_x,
-        acc_y: GTLJC_acceleration.acc_y,
-        acc_z: GTLJC_acceleration.acc_z,
-        rot_x: GTLJC_rotation.rot_x,
-        rot_y: GTLJC_rotation.rot_y,
-        rot_z: GTLJC_rotation.rot_z,
+        acc_x, acc_y, acc_z,
+        rot_x, rot_y, rot_z,
         speed: GTLJC_speed,
-        log_interval: GTLJC_intervalMilli,
+        log_interval: counter * GTLJC_sampleRate,
         latitude: GTLJC_latitude,
         longitude: GTLJC_longitude,
         accuracy: GTLJC_accuracy,
@@ -60,10 +70,11 @@ export default function GTLJC_TabVisualize() {
       };
       setLogData(prev => [...prev, entry]);
       GTLJC_setCounter(prev => prev + 1);
-      GTLJC_setIntervalMilli((GTLJC_prev)=> (new Date().getMilliseconds() - GTLJC_prev));
+      GTLJC_setIntervalMilli((new Date()).getTime());
       GTLJC_setDate(new Date().toISOString());
+
       counter++;
-    }, 250);
+    }, GTLJC_sampleRate);
   };
 
   const resetLogs = () => {
@@ -78,12 +89,12 @@ export default function GTLJC_TabVisualize() {
     return `${headers}\n${rows}`;
   };
 
-  const [GTLJC_logNo, GTLJC_setLogNo] = useState(0);
+  const [GTLJC_logNo, GTLJC_setLogNo] = useState(1);
   const shareLogs = async (sendToServer = false) => {
     try {
       setIsPreparing(true);
       GTLJC_setLogNo((GTLJC_prev)=>GTLJC_prev + 1);
-      const fileName = `anomalies_log${GTLJC_logNo + 1}.csv`;
+      const fileName = `anomalies_log${(new Date).toISOString()}.csv`;
       const fileUri = FileSystem.documentDirectory + fileName;
       const csvContent = formatCSV(logData);
       await FileSystem.writeAsStringAsync(fileUri, csvContent, {
@@ -118,11 +129,11 @@ export default function GTLJC_TabVisualize() {
       <Text>Christly date: {GTLJC_date}</Text>
       <Text>Christly counter: {GTLJC_counter}</Text>
       <Text>Christly interval: {GTLJC_intervalMilli}</Text>
-      <Text>Christly speed: {GTLJC_speed}</Text>
-      <Text>Christly latitude: {GTLJC_latitude}</Text>
-      <Text>Christly longitude: {GTLJC_longitude}</Text>
-      <Text>Christly accuracy: {GTLJC_accuracy}</Text>
-      <Text>Christly Log No: {GTLJC_logNo}</Text> GTLJC_logNo
+      <Text>Christly speed: {GTLJC_speedRef.current}</Text>
+      <Text>Christly latitude: {GTLJC_latitudeRef.current}</Text>
+      <Text>Christly longitude: {GTLJC_longitudeRef.current}</Text>
+      <Text>Christly accuracy: {GTLJC_gpsAccuracyRef.current}</Text>
+      <Text>Christly Log No: {GTLJC_logNo}</Text> 
 
       {isPreparing && (
         <View style={{ marginVertical: 10 }}>

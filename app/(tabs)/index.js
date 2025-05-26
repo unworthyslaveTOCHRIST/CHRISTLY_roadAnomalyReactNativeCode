@@ -238,8 +238,7 @@ export default function GTLJC_RootIndex(){
   const [subscription, setSubscription] = useState(null);
   const [subscription_gyr, setSubscription_gyr] = useState(null);
 
-  Accelerometer.setUpdateInterval(500);
-  Gyroscope.setUpdateInterval(30);
+ 
 
   const {
                 GTLJC_acceleration,GTLJC_setAcceleration, 
@@ -254,27 +253,46 @@ export default function GTLJC_RootIndex(){
                 GTLJC_accuracy, GTLJC_setAccuracy,
                 GTLJC_xData, GTLJC_setXData,
                 GTLJC_yData, GTLJC_setYData,
-                GTLJC_zData, GTLJC_setZData
+                GTLJC_zData, GTLJC_setZData,
+                GTLJC_accelRef, GTLJC_gyroRef,
+                GTLJC_sampleRate, GTLJC_setSampleRate,
+                GTLJC_latitudeRef, GTLJC_longitudeRef,
+                GTLJC_speedRef, GTLJC_gpsAccuracyRef           
+
 
             } = useSensor();
+
+  
+  Accelerometer.setUpdateInterval(GTLJC_sampleRate - 10);
+  Gyroscope.setUpdateInterval(GTLJC_sampleRate - 10);
+
   const _subscribe = () => {
-    setSubscription(Accelerometer.addListener( accelerometerData =>
-      GTLJC_setAcceleration({
-        acc_x : accelerometerData.x * 9.81,
-        acc_y : accelerometerData.y * 9.81,
-        acc_z : accelerometerData.z * 9.81
-      })
+  setSubscription(Accelerometer.addListener( accelerometerData =>
+    {
+      const GTLJC_v = {
+        acc_x: accelerometerData.x * 9.81, 
+        acc_y: accelerometerData.y * 9.81, 
+        acc_z: accelerometerData.z * 9.81 
+      };
+      GTLJC_accelRef.current = GTLJC_v;
+      GTLJC_setAcceleration(GTLJC_v);
+  }
     
     ));
     setSubscription_gyr(
-      Gyroscope.addListener(gyroScopeData =>{
-        GTLJC_setRotation({
-          rot_x : gyroScopeData.x,
-          rot_y : gyroScopeData.y,
-          rot_z : gyroScopeData.z 
-        } )
-      })
-    );
+      Gyroscope.addListener(gyroScopeData =>
+      {
+
+       const GTLJC_v = {
+        rot_x: gyroScopeData.x * 9.81, 
+        rot_y: gyroScopeData.y * 9.81, 
+        rot_z: gyroScopeData.z * 9.81 
+      };
+      GTLJC_gyroRef.current = GTLJC_v;
+        GTLJC_setRotation(GTLJC_v)
+    }
+    
+    ));
 
     
   };
@@ -361,6 +379,11 @@ export default function GTLJC_RootIndex(){
           //   },
           //     zoom :10,
           // });
+          GTLJC_speedRef.current = GTLJC_newLocation.coords.speed;
+          GTLJC_latitudeRef.current = GTLJC_newLocation.coords.latitude;
+          GTLJC_longitudeRef.current = GTLJC_newLocation.coords.longitude;
+          GTLJC_gpsAccuracyRef.current = GTLJC_newLocation.coords.accuracy;
+          
 
           GTLJC_setSpeed(GTLJC_newLocation.coords.speed);
           GTLJC_setLatitude(GTLJC_newLocation.coords.latitude);

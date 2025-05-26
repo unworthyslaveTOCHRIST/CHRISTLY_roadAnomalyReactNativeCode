@@ -1,7 +1,7 @@
 // ALL THANKS AND GLORY TO THE AND my ONLY GOD AND LORD JESUS CHRIST ALONE
 
 import React from "react";
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useState, useRef } from "react";
 
 const GTLJC_SensorContext_ = createContext();
 
@@ -21,6 +21,15 @@ export const GTLJC_SensorProvider = ({children}) => {
     const [GTLJC_xData, GTLJC_setXData] = useState([0,0]);
     const [GTLJC_yData, GTLJC_setYData] = useState([0,0]);
     const [GTLJC_zData, GTLJC_setZData] = useState([0,0]);
+    const GTLJC_accelRef = useRef({ acc_x: 0, acc_y: 0, acc_z: 0 });
+    const GTLJC_gyroRef  = useRef({ rot_x: 0, rot_y: 0, rot_z: 0 });
+    const [GTLJC_sampleRate, GTLJC_setSampleRate] = useState(50);
+    const GTLJC_latitudeRef = useRef(0);
+    const GTLJC_longitudeRef = useRef(0);
+    const GTLJC_speedRef = useRef(0);
+    const GTLJC_gpsAccuracyRef = useRef(0);
+
+
 
 
     return(
@@ -38,7 +47,12 @@ export const GTLJC_SensorProvider = ({children}) => {
                 GTLJC_accuracy, GTLJC_setAccuracy,
                 GTLJC_xData, GTLJC_setXData,
                 GTLJC_yData, GTLJC_setYData,
-                GTLJC_zData, GTLJC_setZData
+                GTLJC_zData, GTLJC_setZData,
+                GTLJC_accelRef, GTLJC_gyroRef,
+                GTLJC_sampleRate, GTLJC_setSampleRate,
+                GTLJC_latitudeRef, GTLJC_longitudeRef,
+                GTLJC_speedRef, GTLJC_gpsAccuracyRef
+
             }} 
         >
             {children}
