@@ -264,7 +264,7 @@ export default function GTLJC_RootIndex(){
 
   
   Accelerometer.setUpdateInterval(GTLJC_sampleRate - 10);
-  Gyroscope.setUpdateInterval(GTLJC_sampleRate - 10);
+  Gyroscope.setUpdateInterval(GTLJC_sampleRate - 15);
 
   const _subscribe = () => {
   setSubscription(Accelerometer.addListener( accelerometerData =>
@@ -406,7 +406,14 @@ export default function GTLJC_RootIndex(){
         GTLJC_subscription.remove();
       }
     };
-  },[])
+  },
+  [
+    GTLJC_accelRef.acc_x, 
+    GTLJC_accelRef.acc_y, 
+    
+  
+  ]
+)
 
 
 const GTLJC_getDataIn = async ()=>{

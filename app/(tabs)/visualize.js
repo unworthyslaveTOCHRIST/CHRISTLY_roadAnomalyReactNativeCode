@@ -7,7 +7,7 @@ import * as Sharing from "expo-sharing";
 import { useSensor } from "../../components/GTLJC_SensorContext";
 import { useFocusEffect } from "expo-router";
 import { Feather, MaterialIcons } from "@expo/vector-icons";
-import { Accelerometer,Gyroscope } from "expo-sensors";
+import { SafeAreaView } from "react-native";
 
 export default function GTLJC_TabVisualize() {
   const {
@@ -28,19 +28,17 @@ export default function GTLJC_TabVisualize() {
     GTLJC_accelRef, GTLJC_gyroRef,
     GTLJC_sampleRate, GTLJC_setSampleRate,
     GTLJC_latitudeRef, GTLJC_longitudeRef,
-    GTLJC_speedRef, GTLJC_gpsAccuracyRef
-
+    GTLJC_speedRef, GTLJC_gpsAccuracyRef,
   } = useSensor();
 
 
   const [logData, setLogData] = useState([]);
   const [isPreparing, setIsPreparing] = useState(false);
   const [collecting, setCollecting] = useState(false);
-  const [resetTrigger, setResetTrigger] = useState(false);
+  const [GTLJC_resetTrigger, GTLJC_setResetTrigger] = useState(false);
+  const [GTLJC_data, GTLJC_setData] = useState(null);
 
-
-
-  const collectAnomalyLogs = () => {
+  const collectAnomalyLogs = (anomaly = "smooth") => {
     if (collecting) return;
     setCollecting(true);
     let counter = 0;
@@ -54,19 +52,24 @@ export default function GTLJC_TabVisualize() {
       } 
     
 
-      const { acc_x, acc_y, acc_z } = GTLJC_accelRef.current;
-      const { rot_x, rot_y, rot_z } = GTLJC_gyroRef.current;
+        const { acc_x, acc_y, acc_z } = GTLJC_accelRef.current;
+        const { rot_x, rot_y, rot_z } = GTLJC_gyroRef.current;
+        const speed     = GTLJC_speedRef.current;
+        const latitude  = GTLJC_latitudeRef.current;
+        const longitude = GTLJC_longitudeRef.current;
+        const accuracy  = GTLJC_gpsAccuracyRef.current;
 
       const entry = {
         batch_id: GTLJC_batchId,
         acc_x, acc_y, acc_z,
         rot_x, rot_y, rot_z,
-        speed: GTLJC_speed,
+        speed,
         log_interval: counter * GTLJC_sampleRate,
-        latitude: GTLJC_latitude,
-        longitude: GTLJC_longitude,
-        accuracy: GTLJC_accuracy,
-        timestamp: new Date().toISOString()
+        latitude,
+        longitude,
+        accuracy,
+        timestamp: new Date().toISOString(),
+        anomaly
       };
       setLogData(prev => [...prev, entry]);
       GTLJC_setCounter(prev => prev + 1);
@@ -78,10 +81,15 @@ export default function GTLJC_TabVisualize() {
   };
 
   const resetLogs = () => {
+    GTLJC_setResetTrigger(true)
     setLogData([]);
     GTLJC_setCounter(0);
     GTLJC_setBatchId(0);
+    if (GTLJC_setResetTrigger) setTimeout(()=>{GTLJC_setResetTrigger(false);},6000);
   };
+
+ 
+  
 
   const formatCSV = (data) => {
     const headers = Object.keys(data[0] || {}).join(",");
@@ -93,7 +101,6 @@ export default function GTLJC_TabVisualize() {
   const shareLogs = async (sendToServer = false) => {
     try {
       setIsPreparing(true);
-      GTLJC_setLogNo((GTLJC_prev)=>GTLJC_prev + 1);
       const fileName = `anomalies_log${(new Date).toISOString()}.csv`;
       const fileUri = FileSystem.documentDirectory + fileName;
       const csvContent = formatCSV(logData);
@@ -121,19 +128,20 @@ export default function GTLJC_TabVisualize() {
     }
   };
 
+    
+
   return (
-    <View style={{ padding: 10 }}>
+    <SafeAreaView  style={{ padding: 10 }}>
       <Text>Christly Acceleration: {JSON.stringify(GTLJC_acceleration)}</Text>
       <Text>Christly Rotation: {JSON.stringify(GTLJC_rotation)}</Text>
       <Text>Christly batch id: {GTLJC_batchId}</Text>
       <Text>Christly date: {GTLJC_date}</Text>
       <Text>Christly counter: {GTLJC_counter}</Text>
-      <Text>Christly interval: {GTLJC_intervalMilli}</Text>
-      <Text>Christly speed: {GTLJC_speedRef.current}</Text>
+      {/* <Text>Christly interval: {GTLJC_intervalMilli}</Text> */}
+      <Text>Instanateous speed: {GTLJC_speedRef.current}</Text>
       <Text>Christly latitude: {GTLJC_latitudeRef.current}</Text>
       <Text>Christly longitude: {GTLJC_longitudeRef.current}</Text>
-      <Text>Christly accuracy: {GTLJC_gpsAccuracyRef.current}</Text>
-      <Text>Christly Log No: {GTLJC_logNo}</Text> 
+      <Text>Christly accuracy of GPS Readings: {GTLJC_gpsAccuracyRef.current}</Text>
 
       {isPreparing && (
         <View style={{ marginVertical: 10 }}>
@@ -152,14 +160,53 @@ export default function GTLJC_TabVisualize() {
           </Text>
         </View>
       )}
-
+    
+    {GTLJC_resetTrigger && (
+        <View style={{ marginVertical: 10 }}>
+          <ActivityIndicator size="small" color="#aaaaaa" />
+          <Text style={{ textAlign: "center", color: "#aaaaaa" }}>
+            Resetting logs
+          </Text>
+        </View>
+      )}
       <View style={styles.row}>
-        <TouchableOpacity style={styles.button} onPress={collectAnomalyLogs}>
+        <TouchableOpacity style={styles.button} onPress={()=>collectAnomalyLogs("smooth-road")}>
            <Feather name="activity" size={20} color="white" />
-          <Text style={styles.buttonText}>Collect Anomaly</Text>
+          <Text style={styles.buttonText}>Smooth Road?</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.button} onPress={resetLogs}>
+        <TouchableOpacity style={styles.button} onPress={()=>collectAnomalyLogs("cracked-road")}>
+           <Feather name="activity" size={20} color="white" />
+          <Text style={styles.buttonText}>Cracked Road?</Text>
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.row}>
+        <TouchableOpacity style={styles.button} onPress={()=>collectAnomalyLogs("bump")}>
+           <Feather name="activity" size={20} color="white" />
+          <Text style={styles.buttonText}>Bump?</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.button} onPress={()=>collectAnomalyLogs("road-patch")}>
+           <Feather name="activity" size={20} color="white" />
+          <Text style={styles.buttonText}>Road-Patch?</Text>
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.row}>
+        <TouchableOpacity style={styles.button} onPress={()=>collectAnomalyLogs("pothole-mild")}>
+           <Feather name="activity" size={20} color="white" />
+          <Text style={styles.buttonText}>Mild Pothole?</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.button} onPress={()=>collectAnomalyLogs("pothole-severe")}>
+           <Feather name="activity" size={20} color="white" />
+          <Text style={styles.buttonText}>Severe Pothole?</Text>
+        </TouchableOpacity>
+      </View>
+
+    <View style={styles.row}>
+        <TouchableOpacity style={{...styles.button,backgroundColor : "#112233"}} onPress={resetLogs}>
             <MaterialIcons name="delete" size={18} color="white" />
            
           <Text style={styles.buttonText}>Reset Logs</Text>
@@ -167,18 +214,18 @@ export default function GTLJC_TabVisualize() {
       </View>
 
       <View style={styles.row}>
-        <TouchableOpacity style={styles.button} onPress={() => shareLogs(true)}>
+        <TouchableOpacity style={{...styles.button, backgroundColor : "#9f3acf"}} onPress={() => shareLogs(true)}>
           <Feather name="send" size={20} color="white" />
           
           <Text style={styles.buttonText}>Share + Send</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.button} onPress={() => shareLogs(false)}>
+        <TouchableOpacity style={{...styles.button, backgroundColor : "#9f3acf"}} onPress={() => shareLogs(false)}>
           <MaterialIcons name="share" size={20} color="white" />
           <Text style={styles.buttonText}>Share Only</Text>
         </TouchableOpacity>
       </View>
-    </View>
+    </SafeAreaView >
   );
 }
 
@@ -186,22 +233,24 @@ const styles = StyleSheet.create({
   button: {
     flexDirection: "row",
     backgroundColor: "#15bb",
-    padding: 12,
-    margin: 8,
+    padding: 10,
+    margin: 7,
     borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
-    flex: 1
+    flex: 1,
+    
   },
   buttonText: {
     color: "white",
     marginLeft: 8,
-    fontWeight: "bold"
+    fontWeight: "bold",
+    
   },
   row: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginTop: 20
+    marginTop: 2
   }
 });
 
