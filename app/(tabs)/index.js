@@ -24,11 +24,10 @@ import { useCallback } from "react";
 import { useLocalSearchParams } from "expo-router";
 
 import { useSensor } from "../../components/GTLJC_SensorContext";
+import { Ionicons } from "@expo/vector-icons";
+import { StatusBar } from "react-native";
 
-// import Geolocation from "react-native-geolocation-service"
 
-// const GTLJC_status = await Location.requestForegroundPermissionsAsync();
-            
 
 
   
@@ -213,30 +212,10 @@ export default function GTLJC_RootIndex(){
 
 
     const [GTLJC_inData, GTLJC_setInData] = React.useState([])
-    const [GTLJC_inData_info, GTLJC_setInDataInfo] = React.useState([])
-    const [GTLJC_outData, GTLJC_setOutData] = React.useState([{
-        batch_id : 0,
-        acc_x : 0,
-        acc_y : 0,
-        acc_z : 0,
-        rot_x : 0,
-        rot_y : 0,
-        rot_z : 0,
-        speed : 0,
-        log_interval : 0,
-        latitude : 0,
-        longitude : 0,
-        accuracy : 0,
-        timestamp : (new Date).toISOString(),
-
-
-    }])
-    
+    const [GTLJC_inData_info, GTLJC_setInDataInfo] = React.useState([])    
     const [GTLJC_repeatDet, GTLJC_setRepeatTimer] = React.useState(0)
-
-
-  const [subscription, setSubscription] = useState(null);
-  const [subscription_gyr, setSubscription_gyr] = useState(null);
+    const [subscription, setSubscription] = useState(null);
+    const [subscription_gyr, setSubscription_gyr] = useState(null);
 
  
 
@@ -434,7 +413,7 @@ const GTLJC_getDataIn = async ()=>{
     }))
     GTLJC_setInDataInfo([
       {
-        anomaly : "User Location" + " (next) ==>",
+        anomaly : "User Location" + " (next) ==>" ,
         distanceToAnomaly : "0",
         timeToReachAnomaly : "0",
         latitude : GTLJC_userLocation && GTLJC_userLocation.latitude,
@@ -447,69 +426,15 @@ const GTLJC_getDataIn = async ()=>{
     // console.log(GTLJC_resJson)
   }
 
-  const GTLJC_getDataOut = async ()=>{
-
-    GTLJC_setRepeatTimer(GTLJC_prev=>GTLJC_prev + 1);
-    GTLJC_setCounter(GTLJC_prev=>GTLJC_prev + 1)
-    GTLJC_setDate((new Date).toISOString());
-        GTLJC_setOutData((GTLJC_prev)=>[
-      ...GTLJC_prev,
-      {
-        batch_id : GTLJC_batchId,
-        acc_x : GTLJC_acceleration.acc_x,
-        acc_y : GTLJC_acceleration.acc_y,
-        acc_z : GTLJC_acceleration.acc_z,
-        rot_x : GTLJC_rotation.rot_x,
-        rot_y : GTLJC_rotation.rot_y,
-        rot_z : GTLJC_rotation.rot_z,
-        speed : GTLJC_userLocation && GTLJC_userLocation.speed,
-        timestamp : GTLJC_date,
-        log_interval : GTLJC_intervalMilli,
-        latitude :GTLJC_userLocation && GTLJC_userLocation.latitude,
-        longitude :GTLJC_userLocation && GTLJC_userLocation.longitude,
-        accuracy :GTLJC_userLocation && GTLJC_userLocation.accuracy,
-
-     }
-    ]
-  );
-    // if (GTLJC_counter >= 59){
-      // GTLJC_setCounter(0);
-      // GTLJC_setBatchId((GTLJC_prev)=> GTLJC_prev + 1);
-
-      // const GTLJC_res = await fetch("https://roadanomalyforchrist.pythonanywhere.com/api-road-out/road_anomaly_out/",
-      //   {
-      //       method : 'POST',
-      //       headers : {
-      //           'Content-Type' : 'application/json',
-      //       },
-      //       body : JSON.stringify(GTLJC_outData)
-      //         }
-      //     ).catch(err=>console.log(err))
-
-      // const GTLJC_resJson = await GTLJC_res.json();
-      // console.log(GTLJC_resJson);
-      
-      // console.log(GTLJC_outData);
-      // GTLJC_setOutData([]);
-    // }
-    GTLJC_setIntervalMilli((new Date).getMilliseconds())
-    
-  }
+ 
 
   const [GTLJC_sendData, GTLJC_setSendData] = React.useState(true);
 
   useEffect(() => {
     _subscribe();
     GTLJC_getDataIn();
-    // setInterval(()=>{
-    //   GTLJC_sendData && GTLJC_getDataOut()
-    // }, 1000)
-    // {GTLJC_sendData && GTLJC_getDataOut();}
    return () => _unsubscribe();
   }, [GTLJC_rotation.rot_x]);
-
-
-
     
   const [GTLJC_anomalyInIndex, GTLJC_setAnomalyInIndex] = React.useState(0);
  
@@ -584,6 +509,11 @@ const GTLJC_getDataIn = async ()=>{
                   }}>
                      User Location
                 </Text>
+                <Image
+                    source={GTLJC_inData_info[0] && GTLJC_inData_info[0].icon_url} 
+                    style = {{height : 20, width : 20, alignSelf : "center", marginTop : 5}}
+                    
+                  />
               </TouchableOpacity>
 
 
@@ -608,8 +538,8 @@ const GTLJC_getDataIn = async ()=>{
                     fontWeight : 900,
                     fontStyle : "italic"
                   }}>
-                      {GTLJC_inData_info[GTLJC_anomalyInIndex] && GTLJC_inData_info[GTLJC_anomalyInIndex].anomaly} 
-                     
+                      {GTLJC_inData_info[GTLJC_anomalyInIndex] && GTLJC_inData_info[GTLJC_anomalyInIndex].anomaly } 
+                     {/* <Ionicons name = "ion-arrow-right-a" size = {21} color= "white" /> */}
                 </Text>
                 <Image
                   
@@ -666,6 +596,11 @@ const GTLJC_getDataIn = async ()=>{
   else if (Platform.OS === "android"){
       return(
             <>
+              <StatusBar
+                  backgroundColor="transparent"
+                  barStyle="dark-content"
+                  translucent = {true}
+              />
               <GoogleMaps.View
                   style = {StyleSheet.absoluteFill}
                   cameraPosition = {GTLJC_cameraPosition}
@@ -727,21 +662,7 @@ const GTLJC_getDataIn = async ()=>{
                         JSON.stringify({ type: "onMapClick", data: e }, null, 2)
                       );
                     }}
-                    // onMapLongClick={(e) => {
-                    //   console.log(
-                    //     JSON.stringify({ type: "onMapLongClick", data: e }, null, 2)
-                    //   );
-                    // }}
-                    // onPOIClick={(e) => {
-                    //   console.log(
-                    //     JSON.stringify({ type: "onPOIClick", data: e }, null, 2)
-                    //   );
-                    // }}
-                    // onMarkerClick={(e) => {
-                    //   console.log(
-                    //     JSON.stringify({ type: "onMarkerClick", data: e }, null, 2)
-                    //   );
-                    // }}
+               
                     // onCameraMove={(e) => {
                     //   console.log(
                     //     JSON.stringify({ type: "onCameraMove", data: e }, null, 2)

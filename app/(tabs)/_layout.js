@@ -8,6 +8,7 @@ import { Ionicons } from "@expo/vector-icons";
 
 import { GTLJC_SensorProvider } from "../../components/GTLJC_SensorContext";
 
+
 export default function GTLJC_TabLayout(){
 
     const GTLJC_router = useRouter();
@@ -15,7 +16,8 @@ export default function GTLJC_TabLayout(){
     return(
        
         <GTLJC_SensorProvider>
-                <Tabs
+        
+        <Tabs
             screenOptions={{
                 tabBarActiveTintColor : "blue",
                 // tabBarShowLabel : false,

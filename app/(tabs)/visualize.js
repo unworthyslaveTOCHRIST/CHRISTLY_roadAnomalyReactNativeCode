@@ -6,8 +6,11 @@ import * as FileSystem from "expo-file-system";
 import * as Sharing from "expo-sharing";
 import { useSensor } from "../../components/GTLJC_SensorContext";
 import { useFocusEffect } from "expo-router";
-import { Feather, MaterialIcons } from "@expo/vector-icons";
+import { Feather, Ionicons, MaterialCommunityIcons, MaterialIcons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native";
+import { FontAwesome5 } from "@expo/vector-icons";
+import { FontAwesome } from "@expo/vector-icons";
+import { StatusBar } from "react-native";
 
 export default function GTLJC_TabVisualize() {
   const {
@@ -109,11 +112,11 @@ export default function GTLJC_TabVisualize() {
       });
 
       if (sendToServer) {
-        await fetch("https://roadanomalyforchrist.pythonanywhere.com/api-road-out/road_anomaly_out/", {
+        await fetch("https://roadanomalyforchrist.pythonanywhere.com/api-road-inference-logs/road_anomaly_infer/", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(logData),
-        });
+        }).then(res=>console.log("Gracious response returned: " + JSON.stringify(res.json()) ));
       }
 
       if (await Sharing.isAvailableAsync()) {
@@ -132,17 +135,93 @@ export default function GTLJC_TabVisualize() {
 
   return (
     <SafeAreaView  style={{ padding: 10 }}>
-      <Text>Christly Acceleration: {JSON.stringify(GTLJC_acceleration)}</Text>
-      <Text>Christly Rotation: {JSON.stringify(GTLJC_rotation)}</Text>
-      <Text>Christly batch id: {GTLJC_batchId}</Text>
-      <Text>Christly date: {GTLJC_date}</Text>
-      <Text>Christly counter: {GTLJC_counter}</Text>
-      {/* <Text>Christly interval: {GTLJC_intervalMilli}</Text> */}
-      <Text>Instanateous speed: {GTLJC_speedRef.current}</Text>
-      <Text>Christly latitude: {GTLJC_latitudeRef.current}</Text>
-      <Text>Christly longitude: {GTLJC_longitudeRef.current}</Text>
-      <Text>Christly accuracy of GPS Readings: {GTLJC_gpsAccuracyRef.current}</Text>
+      
+      <View style={{ flexDirection: "row", justifyContent: "space-between", marginVertical: 10 }}>
+        {/* 📈 Acceleration & Rotation Dashboard */}
+        <View style={{
+          flex: 1,
+          backgroundColor: "#111",
+          borderRadius: 10,
+          padding: 10,
+          marginRight: 5
+        }}>
+          <Text style={{ color: "#fff", fontWeight: "bold", fontSize: 16, marginBottom: 8 }}>
+            📈 Acceleration (m/s²)
+          </Text>
+          {["x", "y", "z"].map(axis => {
+            const val = GTLJC_acceleration[`acc_${axis}`];
+            const all = [
+              GTLJC_acceleration.acc_x,
+              GTLJC_acceleration.acc_y,
+              GTLJC_acceleration.acc_z,
+            ];
+            const sorted = [...all].sort((a, b) => a - b);
+            const annotation = val === sorted[0] ? "📉 Lowest" : val === sorted[2] ? "📈 Highest" : "↔️ Middle";
+            return (
+              <Text key={axis} style={{ color: "#6EC1E4", marginLeft: 10 }}>
+                {`• ${axis.toUpperCase()}: ${val?.toFixed(4)}  ${annotation}`}
+              </Text>
+            );
+          })}
 
+          <Text style={{ color: "#fff", fontWeight: "bold", fontSize: 16, marginTop: 12 }}>
+            🔁 Rotation (rad/s)
+          </Text>
+          {["x", "y", "z"].map(axis => {
+            const val = GTLJC_rotation[`rot_${axis}`];
+            const all = [
+              GTLJC_rotation.rot_x,
+              GTLJC_rotation.rot_y,
+              GTLJC_rotation.rot_z,
+            ];
+            const sorted = [...all].sort((a, b) => a - b);
+            const annotation = val === sorted[0] ? "📉 Lowest" : val === sorted[2] ? "📈 Highest" : "↔️ Middle";
+            return (
+              <Text key={axis} style={{ color: "#ABEBC6", marginLeft: 10 }}>
+                {`• ${axis.toUpperCase()}: ${val?.toFixed(4)}  ${annotation}`}
+              </Text>
+            );
+          })}
+        </View>
+
+        {/* 📡 Meta + GPS Info Dashboard */}
+        <View style={{
+          flex: 1,
+          backgroundColor: "#222",
+          borderRadius: 10,
+          padding: 10,
+          marginLeft: 5
+        }}>
+          <Text style={{ color: "#fff", fontWeight: "bold", fontSize: 16, marginBottom: 8 }}>
+            🗂️ Log Info
+          </Text>
+          <Text style={{ color: "#ddd", marginVertical: 2 }}>
+            📦 Batch ID: <Text style={{ color: "white" }}>{GTLJC_batchId}</Text>
+          </Text>
+
+          <Text style={{ color: "#ddd", marginVertical: 2 }}>
+            🧮 Counter: <Text style={{ color: "white" }}>{GTLJC_counter}</Text>
+          </Text>
+
+          <Text style={{ color: "#fff", fontWeight: "bold", fontSize: 16, marginTop: 10, marginBottom: 6 }}>
+            📡 GPS Info
+          </Text>
+          <Text style={{ color: "#ccc", marginVertical: 2 }}>
+            🚀 Speed: <Text style={{ color: "white" }}>{GTLJC_speedRef.current?.toFixed(2)} m/s</Text>
+          </Text>
+          <Text style={{ color: "#ccc", marginVertical: 2 }}>
+            📍 Latitude: <Text style={{ color: "white" }}>{GTLJC_latitudeRef.current}</Text>
+          </Text>
+          <Text style={{ color: "#ccc", marginVertical: 2 }}>
+            📍 Longitude: <Text style={{ color: "white" }}>{GTLJC_longitudeRef.current}</Text>
+          </Text>
+          <Text style={{ color: "#ccc", marginVertical: 2 }}>
+            📶 Accuracy: <Text style={{ color: "white" }}>{GTLJC_gpsAccuracyRef.current}</Text>
+          </Text>
+        </View>
+      </View>
+
+        {/*For Gracious Controls */}
       {isPreparing && (
         <View style={{ marginVertical: 10 }}>
           <ActivityIndicator size="small" color="blue" />
@@ -171,36 +250,36 @@ export default function GTLJC_TabVisualize() {
       )}
       <View style={styles.row}>
         <TouchableOpacity style={styles.button} onPress={()=>collectAnomalyLogs("smooth-road")}>
-           <Feather name="activity" size={20} color="white" />
+           <FontAwesome5 name="road" size={20} color="white" />
           <Text style={styles.buttonText}>Smooth Road?</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.button} onPress={()=>collectAnomalyLogs("cracked-road")}>
-           <Feather name="activity" size={20} color="white" />
+           <MaterialCommunityIcons name="format-line-style" size={20} color="white" />
           <Text style={styles.buttonText}>Cracked Road?</Text>
         </TouchableOpacity>
       </View>
 
       <View style={styles.row}>
         <TouchableOpacity style={styles.button} onPress={()=>collectAnomalyLogs("bump")}>
-           <Feather name="activity" size={20} color="white" />
+           <MaterialIcons name="terrain" size={20} color="white" />
           <Text style={styles.buttonText}>Bump?</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.button} onPress={()=>collectAnomalyLogs("road-patch")}>
-           <Feather name="activity" size={20} color="white" />
+           <MaterialCommunityIcons name="layers-triple-outline" size={20} color="white" />
           <Text style={styles.buttonText}>Road-Patch?</Text>
         </TouchableOpacity>
       </View>
 
       <View style={styles.row}>
         <TouchableOpacity style={styles.button} onPress={()=>collectAnomalyLogs("pothole-mild")}>
-           <Feather name="activity" size={20} color="white" />
+           <FontAwesome name="dot-circle-o" size={20} color="white" />
           <Text style={styles.buttonText}>Mild Pothole?</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.button} onPress={()=>collectAnomalyLogs("pothole-severe")}>
-           <Feather name="activity" size={20} color="white" />
+           <MaterialCommunityIcons name="alert-circle" size={20} color="white" />
           <Text style={styles.buttonText}>Severe Pothole?</Text>
         </TouchableOpacity>
       </View>
