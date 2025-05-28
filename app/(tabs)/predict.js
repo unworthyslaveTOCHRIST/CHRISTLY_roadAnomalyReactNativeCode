@@ -27,9 +27,12 @@ export default function GTLJC_TabPredict(){
 
 
 // if (sendToServer) {
-//         await fetch("https://roadanomalyforchrist.pythonanywhere.com/api-road-inference-logs/road_anomaly_infer/", {
+//         await fetch("https://roadanomaly4christalone.pythonanywhere.com/api-road-inference-logs/road_anomaly_infer/", {
 //           method: "POST",
 //           headers: { "Content-Type": "application/json" },
 //           body: JSON.stringify(logData),
 //         }).then(res=>console.log("Gracious response returned: " + JSON.stringify(res.json()) ));
 //       }
+
+// "https://roadanomaly4christalone.pythonanywhere.com/api-road-prediction-output/road_anomaly_predict/"
+// "https://roadanomaly4christalone.pythonanywhere.com/api-road-verification/road_anomaly_verify/"

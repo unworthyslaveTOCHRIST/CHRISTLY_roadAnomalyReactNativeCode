@@ -112,7 +112,7 @@ export default function GTLJC_TabVisualize() {
       });
 
       if (sendToServer) {
-        await fetch("https://roadanomalyforchrist.pythonanywhere.com/api-road-inference-logs/road_anomaly_infer/", {
+        await fetch("https://roadanomaly4christalone.pythonanywhere.com/api-road-inference-logs/road_anomaly_infer/", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(logData),
