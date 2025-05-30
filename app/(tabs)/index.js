@@ -185,6 +185,7 @@ export default function GTLJC_RootIndex(){
     const GTLJC_icon_urls = {
       smooth : (require("../../assets/images/smooth_FORCHRIST.jpg")),
       pothole_mild : (require("../../assets/images/pothole_FORCHRIST.jpg")),
+      pothole_severe : (require("../../assets/images/pothole_FORCHRIST.jpg")),
       crack : (require("../../assets/images/crack_FORCHRIST.jpg")),
       bump: (require("../../assets/images/bump_FORCHRIST.jpg")),
       "road-patch" : (require("../../assets/images/road_patch_FORCHRISTALONE.png")),

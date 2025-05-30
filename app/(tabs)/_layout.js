@@ -19,7 +19,7 @@ export default function GTLJC_TabLayout(){
         
         <Tabs
             screenOptions={{
-                tabBarActiveTintColor : "blue",
+                tabBarActiveTintColor : "#b03613",
                 // tabBarShowLabel : false,
                     tabBarStyle: {
                     height: 65,

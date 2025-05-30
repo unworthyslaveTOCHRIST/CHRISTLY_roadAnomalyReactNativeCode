@@ -249,12 +249,12 @@ export default function GTLJC_TabVisualize() {
         </View>
       )}
       <View style={styles.row}>
-        <TouchableOpacity style={styles.button} onPress={()=>collectAnomalyLogs("smooth-road")}>
+        <TouchableOpacity style={styles.button} onPress={()=>collectAnomalyLogs("smooth")}>
            <FontAwesome5 name="road" size={20} color="white" />
           <Text style={styles.buttonText}>Smooth Road?</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.button} onPress={()=>collectAnomalyLogs("cracked-road")}>
+        <TouchableOpacity style={styles.button} onPress={()=>collectAnomalyLogs("crack")}>
            <MaterialCommunityIcons name="format-line-style" size={20} color="white" />
           <Text style={styles.buttonText}>Cracked Road?</Text>
         </TouchableOpacity>
@@ -273,12 +273,12 @@ export default function GTLJC_TabVisualize() {
       </View>
 
       <View style={styles.row}>
-        <TouchableOpacity style={styles.button} onPress={()=>collectAnomalyLogs("pothole-mild")}>
+        <TouchableOpacity style={styles.button} onPress={()=>collectAnomalyLogs("pothole_mild")}>
            <FontAwesome name="dot-circle-o" size={20} color="white" />
           <Text style={styles.buttonText}>Mild Pothole?</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.button} onPress={()=>collectAnomalyLogs("pothole-severe")}>
+        <TouchableOpacity style={styles.button} onPress={()=>collectAnomalyLogs("pothole_severe")}>
            <MaterialCommunityIcons name="alert-circle" size={20} color="white" />
           <Text style={styles.buttonText}>Severe Pothole?</Text>
         </TouchableOpacity>
