@@ -399,7 +399,7 @@ export default function GTLJC_RootIndex(){
 const GTLJC_getDataIn = async ()=>{
 
     GTLJC_setRepeatTimer(GTLJC_prev=>GTLJC_prev + 1);
-    const GTLJC_res = await fetch("https://roadanomalyforchrist.pythonanywhere.com/api-road-in/road_anomaly_in/").catch(err=>console.log(err))
+    const GTLJC_res = await fetch("https://roadanomaly4christalone.pythonanywhere.com/api-road-in/road_anomaly_in/").catch(err=>console.log(err))
     const GTLJC_resJson = await GTLJC_res.json()
     GTLJC_setInData(GTLJC_resJson)
 
