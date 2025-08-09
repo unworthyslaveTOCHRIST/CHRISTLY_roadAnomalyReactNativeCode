@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import { View, Text, Dimensions, TouchableOpacity, StyleSheet, ActivityIndicator } from "react-native";
 import * as FileSystem from "expo-file-system";
 import * as Sharing from "expo-sharing";
-import { useSensor } from "../../components/GTLJC_SensorContext";
+import { useSensor } from "../components/GTLJC_SensorContext";
 import { useFocusEffect } from "expo-router";
 import { Feather, Ionicons, MaterialCommunityIcons, MaterialIcons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native";

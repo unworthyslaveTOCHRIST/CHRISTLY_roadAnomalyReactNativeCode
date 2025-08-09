@@ -2,6 +2,7 @@
 // import React from "react";
 import {View, StyleSheet, Text} from "react-native"
 import {Stack} from "expo-router"
+import { Ionicons } from "@expo/vector-icons";
 
 export default function GTLJC_RootLayout(){
     return(

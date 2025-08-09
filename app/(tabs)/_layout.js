@@ -7,6 +7,7 @@ import { useEffect } from "react";
 import { Ionicons } from "@expo/vector-icons";
 
 import { GTLJC_SensorProvider } from "../../components/GTLJC_SensorContext";
+import {View, Text} from "react-native"
 
 
 export default function GTLJC_TabLayout(){
@@ -22,7 +23,8 @@ export default function GTLJC_TabLayout(){
                 tabBarActiveTintColor : "#b03613",
                 // tabBarShowLabel : false,
                     tabBarStyle: {
-                    height: 65,
+                        display : "none",
+                        height: 65,
                     // position: "absolute",
                 },
             }}
@@ -33,13 +35,27 @@ export default function GTLJC_TabLayout(){
                 options={{
                     title : "Find Anomaly",
                     // tabBarIcon : ({color}) => <FontAwesome size = {28} name = "home" color = {color} />,
-                    tabBarIcon : ({color, focused}) => <Ionicons name = "location" color = {color} size = {focused ? 25: 20}/>
+                    tabBarIcon : ({color, focused}) => <Ionicons name = "location" color = {color} size = {focused ? 25: 20}/>,
+                    headerTitle: () => (
+                        <View
+                            style = {{
+                                flexDirection : 'row',
+                                alignItems   : "center",
+                            }}
+                        >
+                            <Ionicons name = "location" color = {"#b03613"} size = {22} style = {{marginRight : 8}}/>
+                            <Text style = {{fontSize : 18, fontWeight: 'bold', color: "#333"}}>Find Anomaly</Text>
+                        </View>
+                    )
+                    
+                
                 }}
+                
                
                 
             />
 
-            <Tabs.Screen
+            {/* <Tabs.Screen
                 name = "visualize"
                 options={{
                     title : "Collect Anomaly Data",
@@ -53,7 +69,7 @@ export default function GTLJC_TabLayout(){
                     title : "Real Time Predictions",
                     tabBarIcon : ({color, focused}) => <Ionicons name = "pulse" color = {color} size = {focused ? 25: 20}/>
                 }}
-            />
+            /> */}
 
             </Tabs>
         </GTLJC_SensorProvider>

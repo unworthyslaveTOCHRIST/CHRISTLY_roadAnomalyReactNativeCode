@@ -1,10 +1,11 @@
 // ALL THANKS AND GLORY TO THE AND my ONLY GOD AND LORD JESUS CHRIST ALONE
 
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, FlatList } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Feather, MaterialIcons } from "@expo/vector-icons";
-import { useSensor } from "../../components/GTLJC_SensorContext";
+import { useSensor } from "../components/GTLJC_SensorContext";
+import { useFocusEffect } from "expo-router";
 
 const API_PREDICTION_OUTPUT = "https://roadanomaly4christalone.pythonanywhere.com/api-road-prediction-output/road_anomaly_predict/";
 const API_VERIFICATION = "https://roadanomaly4christalone.pythonanywhere.com/api-road-verification/road_anomaly_verify/";
@@ -40,8 +41,21 @@ export default function GTLJC_TabPredict() {
   const [showGetPredictionsButton, setShowGetPredictionsButton] = useState(false);
   const [verifying, setVerifying] = useState(null);
   const [loadingPredictions, setLoadingPredictions] = useState(false);
+  const [GTLJC_isVerifying, GTLJC_setIsVerifying] = useState(false);
+  const [GTLJC_isSendingInference, GTLJC_setIsSendingInference] = useState(false);
+
+  useFocusEffect(
+    useCallback(()=>{
+        setCollecting(false);
+        
+      },
+      []
+    )
+  )
+  
 
   const collectStreamingData = () => {
+    setPredictions([]);
     if (collecting) return;
     setCollecting(true);
     let counter = 0;
@@ -84,6 +98,7 @@ export default function GTLJC_TabPredict() {
   };
 
   const sendInferenceData = async () => {
+    GTLJC_setIsSendingInference(true);
     try {
       await fetch(API_INFERENCE, {
         method: "POST",
@@ -94,22 +109,29 @@ export default function GTLJC_TabPredict() {
       setTimeout(() => setShowGetPredictionsButton(true), 3000);
     } catch (err) {
       console.error("❌ Failed to send inference data:", err);
+    } finally{
+      GTLJC_setIsSendingInference(false);
+      setLogData([]);
     }
+    
+
   };
 
   const fetchPredictions = () => {
     setLoadingPredictions(true);
-    fetch(API_PREDICTION_OUTPUT)
+    
+     fetch(API_PREDICTION_OUTPUT)
       .then(res => res.json())
       .then(data => {
         setPredictions(data);
         setShowGetPredictionsButton(false);
       })
       .catch(err => console.error("🚫 Failed to fetch predictions:", err))
-      .finally(() => setLoadingPredictions(false));
+      .finally(setLoadingPredictions(false));
   };
 
   const verifyPrediction = async (item, response) => {
+    GTLJC_setIsVerifying(true);
     setVerifying(item.id);
     try {
       await fetch(API_VERIFICATION, {
@@ -126,12 +148,13 @@ export default function GTLJC_TabPredict() {
       console.error("❌ Error sending verification:", err);
     } finally {
       setVerifying(null);
+      GTLJC_setIsVerifying(true);
     }
   };
 
   const renderPrediction = ({ item }) => (
     <View style={styles.card}>
-      <Text style={styles.cardText}>📍 Location: {item.latitude.toFixed(5)}, {item.longitude.toFixed(5)}</Text>
+      {/* <Text style={styles.cardText}>📍 Location: {item.latitude}, {item.longitude}</Text> */}
       <Text style={styles.cardText}>🌀 Prediction: {item.anomaly_prediction}</Text>
       <Text style={styles.cardText}>🕒 Time: {new Date(item.timestamp).toLocaleTimeString()}</Text>
 
@@ -182,7 +205,33 @@ export default function GTLJC_TabPredict() {
         </TouchableOpacity>
       )}
 
-      {loadingPredictions && <ActivityIndicator size="large" color="#444" />}
+      { collecting &&  
+        <View>
+          <ActivityIndicator size="large" color="green" />
+          <Text style = {{fontStyle : "italic", alignSelf : "center"}}>Collecting</Text>   
+        </View>
+      }
+      {
+        GTLJC_isSendingInference && 
+         <View>
+            <ActivityIndicator size="large" color="blue" />  
+            <Text style = {{fontStyle : "italic", alignSelf : "center"}}>Sending Inference</Text>
+          </View>
+      }
+      {
+          loadingPredictions && 
+          <View>
+           <ActivityIndicator size="large" color="#444" />
+            <Text style = {{fontStyle : "italic", alignSelf : "center"}}>Predicting</Text>     
+          </View>
+      }
+      {
+        GTLJC_isVerifying && 
+        <View>
+          <ActivityIndicator size="large" color="red" />              
+          <Text style = {{fontStyle : "italic", alignSelf : "center"}}>Verifying</Text>
+        </View>
+      }
 
       {predictions.length > 0 && (
         <FlatList
@@ -191,7 +240,11 @@ export default function GTLJC_TabPredict() {
           renderItem={renderPrediction}
           contentContainerStyle={{ paddingBottom: 30 }}
         />
-      )}
+      ) 
+      //   <Text style={{ textAlign: "center", color: "orange" }}>
+      //     No predictions available ...
+      //   </Text>  
+      }
     </SafeAreaView>
   );
 }
