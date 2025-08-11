@@ -1,13 +1,10 @@
 // ALL THANKS AND GLORY TO THE AND my ONLY GOD AND LORD JESUS CHRIST ALONE
 
 import React, { useEffect, useRef,useState } from "react";
-import {Alert, Button, StyleSheet, View, Text, Platform, Image, TouchableOpacity} from "react-native";
+import {Alert, Button, StyleSheet, View, Text, Platform, Image, TouchableOpacity, Modal} from "react-native";
 import { AppleMaps, GoogleMaps } from "expo-maps";
-
 // import { SafeAreaView } from "react-native-safe-area-context";
 import { SafeAreaView } from "react-native";
-
-
 import { AppleMapsMapType } from "expo-maps/build/apple/AppleMaps.types";
 import { GoogleMapsMapType } from "expo-maps/build/google/GoogleMaps.types";
 // import { coolDownAsync } from "expo-web-browser";
@@ -15,43 +12,42 @@ import * as Location from "expo-location"
 import { Accelerometer, Gyroscope } from 'expo-sensors';
 import {useImage} from "expo-image";
 import Polyline from "@mapbox/polyline"
-
+import {BackHandler} from "react-native"
 import { useFocusEffect } from "@react-navigation/native";
-
 import { useCallback } from "react";
-
 import MapView,{Marker} from "react-native-maps"
-
 import { useLocalSearchParams } from "expo-router";
-
 import { useSensor } from "../../components/GTLJC_SensorContext";
 import { Ionicons } from "@expo/vector-icons";
 import { StatusBar } from "react-native";
-// import { MapViewRoute } from "react-native-maps-routes";
+
 import {MapViewRoute} from "react-native-maps-routes";
 import { getDistance, longitudeKeys } from "geolib";
+import * as Speech from "expo-speech";
+import {Picker} from "@react-native-picker/picker"
 
+
+
+const GOOGLE_MAPS_APIKEY = "AIzaSyBYXMiz3S9-vbA9CxSx1sCLTBDba2wZwmY";
 const BASELINE_TRAVELING_SPEED_IN_M_PER_HR = 32180;  // Here is Google's Gracious abasing walking  speed" 
-  
+
 export default function GTLJC_RootIndex(){
     // console.log("Graciously re rendering GTLJC_Index in whole");
-
     const GTLJC_SF_ZOOM = 12;
 
-    const GTLJC_smoothroadIcon = useImage(require("../../assets/images/smooth_FORCHRIST.jpg"))
-    const GTLJC_potholeIcon = useImage(require("../../assets/images/pothole_FORCHRIST.jpg"))
-    const GTLJC_crackIcon = useImage(require("../../assets/images/crack_FORCHRIST.jpg"))
-    const GTLJC_bumpIcon = useImage(require("../../assets/images/bump_FORCHRIST.jpg"))
-    const GTLJC_roadPatchIcon = useImage(require("../../assets/images/road_patch_FORCHRISTALONE.png"))
-    const GTLJC_userLocationIcon = useImage(require("../../assets/images/user_loc_FORCHRISTALONE.png"))
+    const GTLJC_smoothroadIcon    = useImage(require("../../assets/images/smooth_FORCHRIST.jpg"))
+    const GTLJC_potholeIcon       = useImage(require("../../assets/images/pothole_FORCHRIST.jpg"))
+    const GTLJC_crackIcon         = useImage(require("../../assets/images/crack_FORCHRIST.jpg"))
+    const GTLJC_bumpIcon          = useImage(require("../../assets/images/bump_FORCHRIST.jpg"))
+    const GTLJC_roadPatchIcon     = useImage(require("../../assets/images/road_patch_FORCHRISTALONE.png"))
+    const GTLJC_userLocationIcon  = useImage(require("../../assets/images/user_loc_FORCHRISTALONE.png"))
 
     // const GTLJC_params = useLocalSearchParams();
 
     // useEffect(()=>{
     //     console.log("Graciously useeffect has been triggered by route params: ", GTLJC_params.t)
-        
+    
     // },[GTLJC_params.t])
-
 
     const [GTLJC_routeCoords, GTLJC_setRouteCoords] = React.useState(null);
     const GTLJC_origin = {latitude : 7.3775, longitude : 3.9470}
@@ -60,10 +56,9 @@ export default function GTLJC_RootIndex(){
     const GTLJC_getRoute = async () => {
       const GTLJC_apiKey = "AIzaSyBYXMiz3S9-vbA9CxSx1sCLTBDba2wZwmY";
       const GTLJC_url = `https://maps.googleapis.com/maps/api/directions/json?origin=${GTLJC_origin.latitude},${GTLJC_origin.longitude}&destination=${GTLJC_destination.latitude},${GTLJC_destination.longitude}&mode=driving&key=${GTLJC_apiKey}`;
-
-
+     
       try{
-        const GTLJC_response = await  fetch(GTLJC_url)  // .catch(err=>console.log("GTLJC Error: " +))
+        const GTLJC_response = await  fetch(GTLJC_url);  // .catch(err=>console.log("GTLJC Error: " +))
         const GTLJC_json = await GTLJC_response.json();
         console.log("Gracious received data : " + JSON.stringify(GTLJC_json) );
         const GTLJC_points = await Polyline.decode(GTLJC_json.routes[0] && GTLJC_json.routes[0].overview_polyline.points);
@@ -71,13 +66,12 @@ export default function GTLJC_RootIndex(){
         GTLJC_setRouteCoords(GTLJC_coords);
         console.log(GTLJC_routeCoords);
       }
+      
       catch(err){
         console.log("Gracious error fetching directions: ", err)
       }
-
+      
     }
-
-    
 
     const [isFocused, setIsFocused] = useState(false);
 
@@ -91,7 +85,10 @@ export default function GTLJC_RootIndex(){
 
               const GTLJC_status = await Location.requestForegroundPermissionsAsync()
               if (GTLJC_status !== "granted") {
-                "";
+                if (!__DEV__) {
+                  alert("GPS permission is required to use this app. The app will now close.");
+                    BackHandler.exitApp();
+                }
               }
 
               const GTLJC_location = await Location.getCurrentPositionAsync({});
@@ -342,9 +339,6 @@ export default function GTLJC_RootIndex(){
 
     const GTLJC_startLocationUpdates = async () =>{
       const GTLJC_status = await Location.requestForegroundPermissionsAsync()
-            if (GTLJC_status !== "granted") {
-              "";
-            }
 
       GTLJC_subscription = await Location.watchPositionAsync(
         {
@@ -396,13 +390,32 @@ export default function GTLJC_RootIndex(){
   ]
 )
 
+
+
 const GTLJC_computeDistanceToNextAnomaly = (GTLJC_first_point, GTLJC_second_point)=>{
   return(
     GTLJC_first_point.latitude && GTLJC_second_point.latitude ? getDistance({...GTLJC_first_point},{...GTLJC_second_point}) : 0
   )
 }
 
-  const [GTLJC_distanceToNextAnomalyFromUser, GTLJC_setDistanceToAnomalyFromUser] = React.useState(
+
+const [GTLJC_distanceToNextAnomalyFromUser, GTLJC_setDistanceToAnomalyFromUser] = React.useState(
+        GTLJC_userLocation ? GTLJC_computeDistanceToNextAnomaly(
+          {
+            latitude: GTLJC_userLocation && GTLJC_userLocation.latitude,   
+            longitude: GTLJC_userLocation && GTLJC_userLocation.longitude
+          },
+          {
+            latitude: GTLJC_userLocation && GTLJC_userLocation.latitude,   
+            longitude: GTLJC_userLocation && GTLJC_userLocation.longitude   
+          }
+        ) : 0
+  )
+  const [GTLJC_timeToNextAnomalyFromUser, GTLJC_setTimeToNextAnomalyFromUser] = React.useState(0)
+
+
+
+const [GTLJC_distanceToNextAnomalyFromUser_Btn_Nav, GTLJC_setDistanceToAnomalyFromUser_Btn_Nav] = React.useState(
         GTLJC_userLocation ? GTLJC_computeDistanceToNextAnomaly(
           {
             latitude: GTLJC_userLocation && GTLJC_userLocation.latitude,   
@@ -415,9 +428,9 @@ const GTLJC_computeDistanceToNextAnomaly = (GTLJC_first_point, GTLJC_second_poin
         ) : 0
   )
 
- 
+const [GTLJC_timeToNextAnomalyFromUser_Btn_Nav, GTLJC_setTimeToNextAnomalyFromUser_Btn_Nav] = React.useState(0)
 
-  const [GTLJC_timeToNextAnomalyFromUser, GTLJC_setTimeToNextAnomalyFromUser] = React.useState(0)
+
 
   useEffect(() => {
     _subscribe();
@@ -428,9 +441,6 @@ const GTLJC_computeDistanceToNextAnomaly = (GTLJC_first_point, GTLJC_second_poin
 
 
 const GTLJC_getDataIn = async ()=>{
-
-    
-  
 
     GTLJC_setRepeatTimer(GTLJC_prev=>GTLJC_prev + 1);
     const GTLJC_res = await fetch("https://roadanomaly4christalone.pythonanywhere.com/api-road-in/road_anomaly_in/").catch(err=>console.log(err))
@@ -460,7 +470,7 @@ const GTLJC_getDataIn = async ()=>{
           latitude : GTLJC_item.latitude,
           longitude : GTLJC_item.longitude
         }
-      );
+      ).toFixed(2);
 
       return(
         {
@@ -500,37 +510,41 @@ const GTLJC_getDataIn = async ()=>{
 
     // Graciously localizing camera around nearest anomaly (at index 1)
     if (GTLJC_inDataWithUser.length > 1){
-      // ref.current?.setCameraPosition({
-      //   coordinates : {
-      //     latitude: GTLJC_inDataWithUser[1].latitude,
-      //     longitude: GTLJC_inDataWithUser[1].longitude
-      //   },
-      //   zoom: 19
-      // });
 
-      setTimeout(
-      ()=>{GTLJC_setDistanceToAnomalyFromUser(GTLJC_inDataWithUser[1].distance)}
-      , 1000);
-
-      setTimeout(
-      ()=>{
-          (GTLJC_anomalyInIndex !=( GTLJC_inData_info.length - 1) ) && ( GTLJC_distanceToNextAnomalyFromUser &&
-            GTLJC_setTimeToNextAnomalyFromUser(
+      GTLJC_setDistanceToAnomalyFromUser(GTLJC_inDataWithUser[1].distance)
+      GTLJC_setTimeToNextAnomalyFromUser(
             (GTLJC_distanceToNextAnomalyFromUser / BASELINE_TRAVELING_SPEED_IN_M_PER_HR)
-            )
-          )
-        }, 500
-      )
+       )
+
+
+      GTLJC_setDistanceToAnomalyFromUser_Btn_Nav(GTLJC_inDataWithUser[GTLJC_anomalyInIndex].distance);
+      GTLJC_setTimeToNextAnomalyFromUser_Btn_Nav(
+            (GTLJC_distanceToNextAnomalyFromUser_Btn_Nav / BASELINE_TRAVELING_SPEED_IN_M_PER_HR)
+       )
+      
+       
+      function GTLJC_speakOutAnomaly(){
+        for (let GTLJC_i = 0; GTLJC_i < 2; GTLJC_i++ ){
+          Speech.speak("Nearby Anomaly");
+          setTimeout(()=>{},1000);
+          Speech.speak(`${GTLJC_inData_info[1].anomaly.slice(10)}`)
+          setTimeout(()=>{},1000);
+        }
+
+        Speech.speak( `${Math.floor(GTLJC_timeToNextAnomalyFromUser)} hour ` +
+                `${Math.round((GTLJC_timeToNextAnomalyFromUser - Math.floor(GTLJC_timeToNextAnomalyFromUser)) * 60)} minutes away`
+        );               
+        
+      }
+
+      setInterval(()=>GTLJC_speakOutAnomaly(),3000);
+      
+
     }
 
-
-
-
-
-    // console.log(GTLJC_resJson)
   }
 
- 
+
 
   const [GTLJC_dataUnavailable, GTLJC_setDataUnavailable] = React.useState(true);
 
@@ -552,7 +566,21 @@ const GTLJC_getDataIn = async ()=>{
                 GTLJC_setAnomalyInIndex((GTLJC_prev)=>{
                 if(GTLJC_inData_info){
                   console.log("Gracious anomaly" + GTLJC_anomalyInIndex);
+          
+                  if (GTLJC_prev == 0){
+                       ref.current?.setCameraPosition({
+                          coordinates : {
+                              latitude:GTLJC_userLocation &&  GTLJC_userLocation.latitude,
+                              longitude : GTLJC_userLocation && GTLJC_userLocation.longitude,
+                          },
+
+                          zoom : 19,
+                      });
+                  }
+                  
                   return GTLJC_prev > 0 ?   GTLJC_prev - 1 : 0 
+                  
+                 
                 }
                 // return GTLJC_prev
               })
@@ -572,33 +600,11 @@ const GTLJC_getDataIn = async ()=>{
           });
           console.log(ref)
           console.log("Gracious anomaly" + (GTLJC_anomalyInIndex));
-          
-          (GTLJC_anomalyInIndex !=( GTLJC_inData_info.length - 1) ) && (
-                  GTLJC_setDistanceToAnomalyFromUser(
-                    GTLJC_userLocation && GTLJC_computeDistanceToNextAnomaly(
-                      {
-                        latitude: GTLJC_userLocation && GTLJC_userLocation.latitude,   
-                        longitude: GTLJC_userLocation && GTLJC_userLocation.longitude
-                      },
-                      {
-                        latitude: GTLJC_inData_info && GTLJC_inData_info[GTLJC_anomalyInIndex + 1 ].latitude,
-                        longitude: GTLJC_inData_info && GTLJC_inData_info[GTLJC_anomalyInIndex + 1 ].longitude,       
-                      }
-                    )
-                  )
-          )
+   
+          console.log("Gracious Distance to next Anomaly: " + GTLJC_distanceToNextAnomalyFromUser);
 
-          setTimeout(
-            ()=>{
-                (GTLJC_anomalyInIndex !=( GTLJC_inData_info.length - 1) ) && ( GTLJC_distanceToNextAnomalyFromUser &&
-                  GTLJC_setTimeToNextAnomalyFromUser(
-                  (GTLJC_distanceToNextAnomalyFromUser / BASELINE_TRAVELING_SPEED_IN_M_PER_HR)
-                  )
-                )
-            }, 500
-          )
-      
-          console.log("Gracious Distance to next Anomaly: " + GTLJC_distanceToNextAnomalyFromUser)
+
+
       
   }
 
@@ -616,7 +622,147 @@ const GTLJC_getDataIn = async ()=>{
 
         zoom : 20,
     });
+
+
   }
+
+  const  GTLJC_moveToClosetAnomalyLocation = ()=>{
+     ref.current?.setCameraPosition({
+        coordinates : {
+            latitude  :  GTLJC_inData_info[1] &&  GTLJC_inData_info[1].latitude,
+            longitude : GTLJC_inData_info[1] && GTLJC_inData_info[1].longitude 
+        },
+
+        zoom : 20,
+    });
+
+    GTLJC_setAnomalyInIndex(1)
+  }
+
+
+  const locationOptions = {
+    Ekiti: [
+      { label: "Ado-Ekiti", coords: { latitude: 7.621111, longitude: 5.221389 } },
+      { label: "Ijero-Ekiti", coords: { latitude: 7.816667, longitude: 5.083333 } },
+      { label: "Ekiti South-West", coords: { latitude: 7.617082, longitude: 5.24349 } },
+      { label: "Ise-Ekiti", coords: { latitude: 7.46, longitude: 5.42 } },
+      { label: "Irepodun/Ifelodun", coords: { latitude: 7.621111, longitude: 5.221389 } },
+    ],
+    Ondo: [
+      { label: "Akure South", coords: { latitude: 7.25256, longitude: 5.19312 } },
+      { label: "Ondo West", coords: { latitude: 7.09727, longitude: 4.84115 } },
+      { label: "Owo", coords: { latitude: 7.263889, longitude: 5.571111 } },
+      { label: "Odigbo (Ore)", coords: { latitude: 6.74716, longitude: 4.8761 } },
+      { label: "Ondo City", coords: { latitude: 7.09316, longitude: 4.83528 } },
+    ],
+  };
+
+  const [modalVisible, setModalVisible] = useState(false);
+  const [origin, setOrigin] = useState(null);
+  const [destination, setDestination] = useState(null);
+  const [showRoute, setShowRoute] = useState(true);
+
+  // Picker state
+  const [originState, setOriginState] = useState("Ekiti");
+  const [originIdx, setOriginIdx] = useState(0);
+  const [destState, setDestState] = useState("Ondo");
+  const [destIdx, setDestIdx] = useState(0);
+
+  const GTLJC_handleShowRoute = () => {
+    setOrigin(locationOptions[originState][originIdx].coords);
+    setDestination(locationOptions[destState][destIdx].coords);
+    setModalVisible(false);
+  }
+
+  const GTLJC_renderRoute = () => {
+    
+    return <>
+        {/*Gracious Floating Button to open modal */}
+        <TouchableOpacity
+          style = {styles.floatingButton}
+          onPress = {()=>setModalVisible(true)}
+        >
+          <Ionicons name = "locate" size = {24} color = "#fff"/>
+        </TouchableOpacity>
+
+        {/*Gracious Toggle Route Button*/}
+        <TouchableOpacity
+          style = {[styles.floatingButton, {top:70}]}
+          onPress = {()=> setShowRoute(GTLJC_prev=>!GTLJC_prev)}
+        >
+          <Ionicons name = {showRoute ? "eye-off" : "eye"} size = {24} color = "#fff"/>
+        </TouchableOpacity>
+
+        {/*ALL THANKS AND GLORY TO THE AND my ONLY GOD AND LORD JESUS CHRIST ALONE*/}
+        { /*Modal for Places Autocomplete*/}
+        <Modal visible = {modalVisible} animationType = "slide" transparent>
+          <View style = {styles.modalContainer}>
+            <View style = {styles.modalContent}>
+              <Text style = {styles.modalTitle}>Select Locations</Text>
+
+                <Text style = {styles.label}>Origin State</Text>
+                <Picker
+                  selectedValue={originState}
+                  onValueChange={(val)=>{
+                    setOriginState(val);
+                    setOriginIdx(0);
+                  }}
+                >
+                  {Object.keys(locationOptions).map((state)=>(
+                    <Picker.Item key = {state} label = {state} value={state}/>
+                  ))}
+                </Picker>
+
+                <Text style = {styles.label}>Origin LGA</Text>
+                <Picker
+                  selectedValue={originIdx}
+                  onValueChange={(idx)=> setOriginIdx(idx)}
+                >
+                  {locationOptions[originState].map((loc, i) => {
+                    <Picker.Item key = {loc.label} label = {loc.label} value = {i} />
+                  })}
+                </Picker>
+
+                <Text style = {styles.label}>Destination State</Text>
+                <Picker
+                  selectedValue={destState}
+                  onValueChange={(val)=>{
+                    setDestState(val);
+                    setDestIdx(0);
+                  }}
+                >
+                  {Object.keys(locationOptions).map((state)=>(
+                    <Picker.Item key = {state} label = {state} value={state}/>
+                  ))}
+                </Picker>
+
+                <Text style = {styles.label}>Destination LGA</Text>
+                <Picker
+                  selectedValue={destIdx}
+                  onValueChange={(idx)=> setDestIdx(idx)}
+                >
+                  {locationOptions[destState].map((loc, i) => {
+                    <Picker.Item key = {loc.label} label = {loc.label} value = {i} />
+                  })}
+                </Picker>
+
+              <TouchableOpacity
+                style = {styles.submitButton}
+                onPress = {()=>GTLJC_handleShowRoute()}
+              >
+                <Text style = {{color: "#fff", fontWeight : "bold"}}> Show Route </Text>
+              </TouchableOpacity>
+
+            </View>
+          </View>
+        </Modal>
+    
+    </>
+    
+
+  }
+
+  
 
   const GTLJC_renderMapControls = () => {
 
@@ -671,10 +817,10 @@ const GTLJC_getDataIn = async ()=>{
                   }
                 }
 
-                // onPress={()=> GTLJC_handleChangeWithRef()}
-                disabled = {true}
+                onPress={()=> GTLJC_moveToClosetAnomalyLocation ()}
+                // disabled = {true}
               >
-                <Text style = {{color:"red", fontSize: 10, fontWeight: 500, alignSelf : "center", fontStyle:"italic"}}>Approaching... </Text>
+                <Text style = {{color:"red", fontSize: 20, fontWeight: 500, alignSelf : "center", fontStyle:"normal", fontFamily: "serif"}}>Closest</Text>
                 <Text style = {{
                     color : "#2222bb",
                     fontWeight : 900,
@@ -710,9 +856,10 @@ const GTLJC_getDataIn = async ()=>{
                     fontStyle : "italic",
                     fontSize : 10
                   }}>
-                      Time : {Math.round(GTLJC_timeToNextAnomalyFromUser)} hr { Math.round(Math.abs( GTLJC_timeToNextAnomalyFromUser - Math.round(GTLJC_timeToNextAnomalyFromUser)) * 60)} min
+                      Time : {Math.floor(GTLJC_timeToNextAnomalyFromUser)} hr { Math.round((GTLJC_timeToNextAnomalyFromUser - Math.floor(GTLJC_timeToNextAnomalyFromUser)) * 60)} min
                      
                 </Text>
+
         
               </TouchableOpacity>
 
@@ -769,7 +916,7 @@ const GTLJC_getDataIn = async ()=>{
                     display : "flex",
                     justifyContent : "center",
                     alignContent : "center",
-                    width : 130
+                    width : 170
                    
                   }
                 }
@@ -782,7 +929,7 @@ const GTLJC_getDataIn = async ()=>{
                     fontStyle : "italic",
                     textAlign : "center"
                   }}>
-                      { GTLJC_inData_info ? "forward ==>": "Unavailable..." } 
+                      { GTLJC_inData_info ? "go forward ==>": "Unavailable..." } 
                      {/* <Ionicons name = "ion-arrow-right-a" size = {21} color= "white" /> */}
                 </Text>
                 <Image
@@ -794,6 +941,26 @@ const GTLJC_getDataIn = async ()=>{
                     style = {{height : 20, width : 20, alignSelf : "center", marginTop : 5}}
                     
                   />
+
+                   <Text style = {{
+                    color : "#2222bb",
+                    fontWeight : 900,
+                    fontStyle : "italic",
+                    fontSize : 10,
+                    width : 150,
+                  }}>
+                     {Math.round(GTLJC_distanceToNextAnomalyFromUser_Btn_Nav / 1000)} km, {Math.floor(GTLJC_timeToNextAnomalyFromUser_Btn_Nav)} hr { Math.round((GTLJC_timeToNextAnomalyFromUser_Btn_Nav - Math.floor(GTLJC_timeToNextAnomalyFromUser_Btn_Nav)) * 60)} min
+                     
+                </Text>
+                <Text style = {{
+                    color : "#bb6c22ff",
+                    fontWeight : 900,
+                    fontStyle : "italic",
+                    fontSize : 10
+                  }}>
+                      {GTLJC_inData_info[GTLJC_anomalyInIndex] && GTLJC_inData_info[GTLJC_anomalyInIndex].anomaly } 
+                     {/* <Ionicons name = "ion-arrow-right-a" size = {21} color= "white" /> */}
+                </Text>
         
               </TouchableOpacity>
 
@@ -897,6 +1064,7 @@ const GTLJC_getDataIn = async ()=>{
                     //   );
                     // }}
                 />
+                {GTLJC_renderRoute()}
                {GTLJC_renderMapControls()} 
                     
 
@@ -922,6 +1090,48 @@ const styles = StyleSheet.create({
     paddingTop : 5,
     minHeight : 50,
 
+  },
+
+  floatingButton: {
+    position: "absolute",
+    top: 20,
+    left: 20,
+    backgroundColor: "#b03613",
+    padding: 10,
+    borderRadius: 30,
+    elevation: 5,
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: "center",
+    backgroundColor: "rgba(0,0,0,0.5)",
+    paddingHorizontal: 20,
+  },
+  modalContent: {
+    backgroundColor: "#fff",
+    borderRadius: 10,
+    padding: 20,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 15,
+    textAlign: "center",
+  },
+  input: {
+    height: 45,
+    borderRadius: 5,
+    borderWidth: 1,
+    borderColor: "#ccc",
+    paddingHorizontal: 10,
+    fontSize: 16,
+  },
+  submitButton: {
+    backgroundColor: "#b03613",
+    padding: 12,
+    borderRadius: 8,
+    alignItems: "center",
+    marginTop: 10,
   },
 });
 
