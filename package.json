@@ -15,7 +15,7 @@
   "dependencies": {
     "@expo/vector-icons": "^14.1.0",
     "@mapbox/polyline": "^1.2.1",
-    "@react-native-picker/picker": "2.11.1",
+    "@react-native-picker/picker": "2.4.10",
     "@react-navigation/native": "^7.1.6",
     "@shopify/react-native-skia": "v2.0.0-next.4",
     "expo": "~53.0.9",

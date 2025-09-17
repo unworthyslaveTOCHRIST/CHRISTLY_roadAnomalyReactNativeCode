@@ -25,10 +25,16 @@ import {MapViewRoute} from "react-native-maps-routes";
 import { getDistance, longitudeKeys } from "geolib";
 import * as Speech from "expo-speech";
 import {Picker} from "@react-native-picker/picker"
+import { LogBox } from "react-native";
 
+
+LogBox.ignoreLogs([
+  "Maximum update depth exceeded"  // Graciously suppressing only this error
+])
 
 
 const GOOGLE_MAPS_APIKEY = "AIzaSyBYXMiz3S9-vbA9CxSx1sCLTBDba2wZwmY";
+const  API_REGISTERED_ANOMALIES = "https://roadanomaly4christalone-d0b8esbucpenbdd7.canadacentral-01.azurewebsites.net/api-road-in/road_anomaly_in/";
 const BASELINE_TRAVELING_SPEED_IN_M_PER_HR = 32180;  // Here is Google's Gracious abasing walking  speed" 
 
 export default function GTLJC_RootIndex(){
@@ -85,8 +91,8 @@ export default function GTLJC_RootIndex(){
 
               const GTLJC_status = await Location.requestForegroundPermissionsAsync()
               if (GTLJC_status !== "granted") {
-                if (!__DEV__) {
-                  alert("GPS permission is required to use this app. The app will now close.");
+                if (!__DEV__){
+                    alert("GPS permission is required to use this app. The app will now close.");
                     BackHandler.exitApp();
                 }
               }
@@ -248,34 +254,30 @@ export default function GTLJC_RootIndex(){
   Gyroscope.setUpdateInterval(GTLJC_sampleRate - 15);
 
   const _subscribe = () => {
-  setSubscription(Accelerometer.addListener( accelerometerData =>
-    {
-      const GTLJC_v = {
-        acc_x: accelerometerData.x * 9.81, 
-        acc_y: accelerometerData.y * 9.81, 
-        acc_z: accelerometerData.z * 9.81 
-      };
-      GTLJC_accelRef.current = GTLJC_v;
-      GTLJC_setAcceleration(GTLJC_v);
-  }
-    
-    ));
-    setSubscription_gyr(
-      Gyroscope.addListener(gyroScopeData =>
+    setSubscription(Accelerometer.addListener( accelerometerData =>
       {
-
-       const GTLJC_v = {
-        rot_x: gyroScopeData.x * 9.81, 
-        rot_y: gyroScopeData.y * 9.81, 
-        rot_z: gyroScopeData.z * 9.81 
-      };
-      GTLJC_gyroRef.current = GTLJC_v;
-        GTLJC_setRotation(GTLJC_v)
-    }
-    
+        const GTLJC_v = {
+          acc_x: accelerometerData.x * 9.81, 
+          acc_y: accelerometerData.y * 9.81, 
+          acc_z: accelerometerData.z * 9.81 
+        };
+        GTLJC_accelRef.current = GTLJC_v;
+        GTLJC_setAcceleration(GTLJC_v);
+      }    
     ));
 
-    
+    setSubscription_gyr( Gyroscope.addListener(gyroScopeData =>
+      {
+        const GTLJC_v = {
+            rot_x: gyroScopeData.x * 9.81, 
+            rot_y: gyroScopeData.y * 9.81, 
+            rot_z: gyroScopeData.z * 9.81 
+        };
+        GTLJC_gyroRef.current = GTLJC_v;
+        GTLJC_setRotation(GTLJC_v)
+      }    
+    ));
+
   };
 
   
@@ -309,7 +311,7 @@ export default function GTLJC_RootIndex(){
                 
               // console.log(JSON.stringify(GTLJC_inDataMapped))
             
-               GTLJC_setMarkersGoogle([
+              GTLJC_setMarkersGoogle([
                   {
                     coordinates : {
                       latitude : GTLJC_userLocation.latitude,
@@ -399,6 +401,21 @@ const GTLJC_computeDistanceToNextAnomaly = (GTLJC_first_point, GTLJC_second_poin
 }
 
 
+const [GTLJC_distanceToLastAnomalyFromUser, GTLJC_setDistanceToLastAnomalyFromUser] = React.useState(
+        GTLJC_userLocation ? GTLJC_computeDistanceToNextAnomaly(
+          {
+            latitude: GTLJC_userLocation && GTLJC_userLocation.latitude,   
+            longitude: GTLJC_userLocation && GTLJC_userLocation.longitude
+          },
+          {
+            latitude: GTLJC_userLocation && GTLJC_userLocation.latitude,   
+            longitude: GTLJC_userLocation && GTLJC_userLocation.longitude   
+          }
+        ) : 0
+)
+
+const [GTLJC_timeToLastAnomalyFromUser, GTLJC_setTimeToLastAnomalyFromUser] = React.useState(0)
+
 const [GTLJC_distanceToNextAnomalyFromUser, GTLJC_setDistanceToAnomalyFromUser] = React.useState(
         GTLJC_userLocation ? GTLJC_computeDistanceToNextAnomaly(
           {
@@ -411,7 +428,7 @@ const [GTLJC_distanceToNextAnomalyFromUser, GTLJC_setDistanceToAnomalyFromUser] 
           }
         ) : 0
   )
-  const [GTLJC_timeToNextAnomalyFromUser, GTLJC_setTimeToNextAnomalyFromUser] = React.useState(0)
+const [GTLJC_timeToNextAnomalyFromUser, GTLJC_setTimeToNextAnomalyFromUser] = React.useState(0)
 
 
 
@@ -430,35 +447,22 @@ const [GTLJC_distanceToNextAnomalyFromUser_Btn_Nav, GTLJC_setDistanceToAnomalyFr
 
 const [GTLJC_timeToNextAnomalyFromUser_Btn_Nav, GTLJC_setTimeToNextAnomalyFromUser_Btn_Nav] = React.useState(0)
 
-
-
-  useEffect(() => {
-    _subscribe();
-    GTLJC_getDataIn();
-   return () => _unsubscribe();
-  }, [GTLJC_rotation.rot_x]);
+useEffect(() => {
+  _subscribe();
+  GTLJC_getDataIn();
+  return () => _unsubscribe();
+}, [GTLJC_rotation.rot_x]);
     
-
 
 const GTLJC_getDataIn = async ()=>{
 
     GTLJC_setRepeatTimer(GTLJC_prev=>GTLJC_prev + 1);
-    const GTLJC_res = await fetch("https://roadanomaly4christalone.pythonanywhere.com/api-road-in/road_anomaly_in/").catch(err=>console.log(err))
+    const GTLJC_res = await fetch(API_REGISTERED_ANOMALIES).catch(err=>console.log(err))
     const GTLJC_resJson = await GTLJC_res.json()
     // console.log(GTLJC_resJson)
     GTLJC_setInData(GTLJC_resJson)
 
     if(!GTLJC_inData || !GTLJC_userLocation) return;
-
-    const GTLJC_inDataInfoStructure = GTLJC_inData && GTLJC_inData.map((GTLJC_item)=>({
-      anomaly :"Anomaly : ".toUpperCase() + GTLJC_item.anomaly , //+ " ==>",
-      distanceToAnomaly : "xxxx",
-      timeToReachAnomaly : "xxxx",
-      latitude : GTLJC_item.latitude,
-      longitude : GTLJC_item.longitude,
-      location : "xxxx",
-      icon_url : GTLJC_icon_urls[GTLJC_item.anomaly],
-    }))
 
     const GTLJC_inDataStructured = GTLJC_inData.map((GTLJC_item)=>{
       const GTLJC_distance = GTLJC_computeDistanceToNextAnomaly(
@@ -521,32 +525,35 @@ const GTLJC_getDataIn = async ()=>{
       GTLJC_setTimeToNextAnomalyFromUser_Btn_Nav(
             (GTLJC_distanceToNextAnomalyFromUser_Btn_Nav / BASELINE_TRAVELING_SPEED_IN_M_PER_HR)
        )
-      
-       
-      function GTLJC_speakOutAnomaly(){
-        for (let GTLJC_i = 0; GTLJC_i < 2; GTLJC_i++ ){
-          Speech.speak("Nearby Anomaly");
-          setTimeout(()=>{},1000);
-          Speech.speak(`${GTLJC_inData_info[1].anomaly.slice(10)}`)
-          setTimeout(()=>{},1000);
-        }
 
-        Speech.speak( `${Math.floor(GTLJC_timeToNextAnomalyFromUser)} hour ` +
-                `${Math.round((GTLJC_timeToNextAnomalyFromUser - Math.floor(GTLJC_timeToNextAnomalyFromUser)) * 60)} minutes away`
-        );               
+      GTLJC_setDistanceToLastAnomalyFromUser(GTLJC_inDataWithUser[GTLJC_inData_info.length - 1].distance)
+      GTLJC_setTimeToLastAnomalyFromUser(
+            (GTLJC_distanceToLastAnomalyFromUser / BASELINE_TRAVELING_SPEED_IN_M_PER_HR)
+       )
+
+
+      // function GTLJC_speakOutAnomaly(){
+      //   for (let GTLJC_i = 0; GTLJC_i < 2; GTLJC_i++ ){
+      //     Speech.speak(`Nearby Anomaly... ${GTLJC_inDataWithUser[1].anomaly.slice(10)} `);
+      //     setTimeout(()=>{},1000);
+      //     // GTLJC_inData_info[1] && Speech.speak(`${GTLJC_inData_info[1].anomaly.slice(10)}`)
+      //     setTimeout(()=>{},1000);
+      //   }
+
+      //   Speech.speak( `${Math.floor(GTLJC_timeToNextAnomalyFromUser)} hour ` +
+      //           `${Math.round((GTLJC_timeToNextAnomalyFromUser - Math.floor(GTLJC_timeToNextAnomalyFromUser)) * 60)} minutes away`
+      //   );               
         
-      }
+      //   // Speech.stop();
+    
+      // }
 
-      setInterval(()=>GTLJC_speakOutAnomaly(),3000);
+      // setInterval(()=>{GTLJC_speakOutAnomaly()},3000);
       
 
     }
 
   }
-
-
-
-  const [GTLJC_dataUnavailable, GTLJC_setDataUnavailable] = React.useState(true);
 
 
   const [GTLJC_anomalyInIndex, GTLJC_setAnomalyInIndex] = React.useState(0);
@@ -568,14 +575,16 @@ const GTLJC_getDataIn = async ()=>{
                   console.log("Gracious anomaly" + GTLJC_anomalyInIndex);
           
                   if (GTLJC_prev == 0){
-                       ref.current?.setCameraPosition({
-                          coordinates : {
-                              latitude:GTLJC_userLocation &&  GTLJC_userLocation.latitude,
-                              longitude : GTLJC_userLocation && GTLJC_userLocation.longitude,
-                          },
-
-                          zoom : 19,
-                      });
+                      GTLJC_userLocation &&
+                      (
+                          ref.current?.setCameraPosition({
+                            coordinates : {
+                                latitude:  GTLJC_userLocation.latitude,
+                                longitude :  GTLJC_userLocation.longitude,
+                            },
+                            zoom : 19,
+                          })
+                      )
                   }
                   
                   return GTLJC_prev > 0 ?   GTLJC_prev - 1 : 0 
@@ -602,14 +611,24 @@ const GTLJC_getDataIn = async ()=>{
           console.log("Gracious anomaly" + (GTLJC_anomalyInIndex));
    
           console.log("Gracious Distance to next Anomaly: " + GTLJC_distanceToNextAnomalyFromUser);
-
-
-
-      
+   
   }
 
   
+  const GTLJC_speakOutAnomaly = () => {
+        if(GTLJC_inData_info[1] ) {
+          for (let GTLJC_i = 0; GTLJC_i < 2; GTLJC_i++ ){
+            Speech.speak(`Nearby Anomaly... ${GTLJC_inData_info[1].anomaly.slice(10)} `);
+              // GTLJC_inData_info[1] && Speech.speak(`${GTLJC_inData_info[1].anomaly.slice(10)}`)
+          }
 
+          Speech.speak( `${Math.floor(GTLJC_timeToNextAnomalyFromUser)} hour ` +
+                  `${Math.round((GTLJC_timeToNextAnomalyFromUser - Math.floor(GTLJC_timeToNextAnomalyFromUser)) * 60)} minutes away`
+          );               
+          
+          // Speech.stop();
+        }     
+      }
 
 
 
@@ -636,130 +655,89 @@ const GTLJC_getDataIn = async ()=>{
         zoom : 20,
     });
 
-    GTLJC_setAnomalyInIndex(1)
+    GTLJC_setAnomalyInIndex(1);
+    
+    GTLJC_speakOutAnomaly();
+
   }
 
+  
+  const  GTLJC_moveToLastAnomalyLocation = ()=>{
+     ref.current?.setCameraPosition({
+        coordinates : {
+            latitude  :  GTLJC_inData_info[GTLJC_inData_info.length - 1] &&  GTLJC_inData_info[GTLJC_inData_info.length - 1].latitude,
+            longitude : GTLJC_inData_info[GTLJC_inData_info.length - 1] && GTLJC_inData_info[GTLJC_inData_info.length - 1].longitude 
+        },
 
-  const locationOptions = {
-    Ekiti: [
-      { label: "Ado-Ekiti", coords: { latitude: 7.621111, longitude: 5.221389 } },
-      { label: "Ijero-Ekiti", coords: { latitude: 7.816667, longitude: 5.083333 } },
-      { label: "Ekiti South-West", coords: { latitude: 7.617082, longitude: 5.24349 } },
-      { label: "Ise-Ekiti", coords: { latitude: 7.46, longitude: 5.42 } },
-      { label: "Irepodun/Ifelodun", coords: { latitude: 7.621111, longitude: 5.221389 } },
-    ],
-    Ondo: [
-      { label: "Akure South", coords: { latitude: 7.25256, longitude: 5.19312 } },
-      { label: "Ondo West", coords: { latitude: 7.09727, longitude: 4.84115 } },
-      { label: "Owo", coords: { latitude: 7.263889, longitude: 5.571111 } },
-      { label: "Odigbo (Ore)", coords: { latitude: 6.74716, longitude: 4.8761 } },
-      { label: "Ondo City", coords: { latitude: 7.09316, longitude: 4.83528 } },
-    ],
-  };
+        zoom : 20,
+    });
 
-  const [modalVisible, setModalVisible] = useState(false);
-  const [origin, setOrigin] = useState(null);
-  const [destination, setDestination] = useState(null);
-  const [showRoute, setShowRoute] = useState(true);
+    GTLJC_setAnomalyInIndex(GTLJC_inData_info.length - 1);
 
-  // Picker state
-  const [originState, setOriginState] = useState("Ekiti");
-  const [originIdx, setOriginIdx] = useState(0);
-  const [destState, setDestState] = useState("Ondo");
-  const [destIdx, setDestIdx] = useState(0);
 
-  const GTLJC_handleShowRoute = () => {
-    setOrigin(locationOptions[originState][originIdx].coords);
-    setDestination(locationOptions[destState][destIdx].coords);
-    setModalVisible(false);
+
   }
 
   const GTLJC_renderRoute = () => {
     
-    return <>
-        {/*Gracious Floating Button to open modal */}
-        <TouchableOpacity
-          style = {styles.floatingButton}
-          onPress = {()=>setModalVisible(true)}
-        >
-          <Ionicons name = "locate" size = {24} color = "#fff"/>
-        </TouchableOpacity>
+    return( 
+      <>
+          {/*ALL THANKS AND GLORY TO THE AND my ONLY GOD AND LORD JESUS CHRIST ALONE*/}
+          {/*Gracious Anomaly Count */}
+          <TouchableOpacity
+            style = {styles.floatingButton}
+            disabled = {true}
+          >
+            {
+              GTLJC_inData_info[GTLJC_inData_info.length - 1] ? 
+              <>
+                {/* <Ionicons name = "locate" size = {24} color = "#fff"/> */}
+                <Text>No of Anomalies : {GTLJC_inData_info ? GTLJC_inData_info.length : "Unavailable"}</Text>
+              </> : <Text style = {styles.text}>...</Text>
+            }
+          </TouchableOpacity>
 
-        {/*Gracious Toggle Route Button*/}
-        <TouchableOpacity
-          style = {[styles.floatingButton, {top:70}]}
-          onPress = {()=> setShowRoute(GTLJC_prev=>!GTLJC_prev)}
-        >
-          <Ionicons name = {showRoute ? "eye-off" : "eye"} size = {24} color = "#fff"/>
-        </TouchableOpacity>
+          {/*Gracious Recent Anomaly Locator Button*/}
+          <TouchableOpacity
+            style = {[styles.floatingButton, {top:70}]}
+            onPress = {()=> GTLJC_inData_info[GTLJC_inData_info.length - 1] && GTLJC_moveToLastAnomalyLocation()}
+          >
+            {
+              GTLJC_inData_info[GTLJC_inData_info.length - 1] ? 
+              <>
+                {/* <Ionicons name = {"eye"} size = {24} color = "#fff"/> */}
+                <Text>Recent {GTLJC_inData_info[GTLJC_inData_info.length - 1] ? GTLJC_inData_info[GTLJC_inData_info.length - 1].anomaly : "Unavailable"}</Text>
+                <Image
+                        source={GTLJC_inData_info[GTLJC_inData_info.length - 1] && GTLJC_inData_info[GTLJC_inData_info.length - 1].icon_url} 
+                        style = {{height : 20, width : 20, alignSelf : "center", marginTop : 5}}
+                        
+                />
+                <Text style = {{
+                        color : "#2222bb",
+                        fontWeight : 900,
+                        fontStyle : "italic",
+                        fontSize : 10
+                      }}>
+                          Distance To : {Math.round(GTLJC_distanceToLastAnomalyFromUser / 1000)} km
+                    
+                </Text>
 
-        {/*ALL THANKS AND GLORY TO THE AND my ONLY GOD AND LORD JESUS CHRIST ALONE*/}
-        { /*Modal for Places Autocomplete*/}
-        <Modal visible = {modalVisible} animationType = "slide" transparent>
-          <View style = {styles.modalContainer}>
-            <View style = {styles.modalContent}>
-              <Text style = {styles.modalTitle}>Select Locations</Text>
+                <Text style = {{
+                    color : "#2222bb",
+                    fontWeight : 900,
+                    fontStyle : "italic",
+                    fontSize : 10
+                  }}>
+                      Time : {Math.floor(GTLJC_timeToLastAnomalyFromUser)} hr { Math.round((GTLJC_timeToLastAnomalyFromUser - Math.floor(GTLJC_timeToLastAnomalyFromUser)) * 60)} min
+                    
+                </Text>
+              </> : <Text style = {styles.text}>...</Text>
+            }
 
-                <Text style = {styles.label}>Origin State</Text>
-                <Picker
-                  selectedValue={originState}
-                  onValueChange={(val)=>{
-                    setOriginState(val);
-                    setOriginIdx(0);
-                  }}
-                >
-                  {Object.keys(locationOptions).map((state)=>(
-                    <Picker.Item key = {state} label = {state} value={state}/>
-                  ))}
-                </Picker>
-
-                <Text style = {styles.label}>Origin LGA</Text>
-                <Picker
-                  selectedValue={originIdx}
-                  onValueChange={(idx)=> setOriginIdx(idx)}
-                >
-                  {locationOptions[originState].map((loc, i) => {
-                    <Picker.Item key = {loc.label} label = {loc.label} value = {i} />
-                  })}
-                </Picker>
-
-                <Text style = {styles.label}>Destination State</Text>
-                <Picker
-                  selectedValue={destState}
-                  onValueChange={(val)=>{
-                    setDestState(val);
-                    setDestIdx(0);
-                  }}
-                >
-                  {Object.keys(locationOptions).map((state)=>(
-                    <Picker.Item key = {state} label = {state} value={state}/>
-                  ))}
-                </Picker>
-
-                <Text style = {styles.label}>Destination LGA</Text>
-                <Picker
-                  selectedValue={destIdx}
-                  onValueChange={(idx)=> setDestIdx(idx)}
-                >
-                  {locationOptions[destState].map((loc, i) => {
-                    <Picker.Item key = {loc.label} label = {loc.label} value = {i} />
-                  })}
-                </Picker>
-
-              <TouchableOpacity
-                style = {styles.submitButton}
-                onPress = {()=>GTLJC_handleShowRoute()}
-              >
-                <Text style = {{color: "#fff", fontWeight : "bold"}}> Show Route </Text>
-              </TouchableOpacity>
-
-            </View>
-          </View>
-        </Modal>
-    
-    </>
-    
-
+          </TouchableOpacity>
+      </>
+    )
+  
   }
 
   
@@ -770,7 +748,7 @@ const GTLJC_getDataIn = async ()=>{
             <>
           <View style = {{flex : 8}}  pointerEvents="none" />
 
-          <View style = {styles.controlsContainer} pointerEvents="auto">
+          <View style = {{...styles.controlsContainer} } pointerEvents="auto">
               {/* 1 */}
               <TouchableOpacity
                 style = {
@@ -785,18 +763,23 @@ const GTLJC_getDataIn = async ()=>{
 
                 onPress={()=> GTLJC_seeUserLocation()}
               >
-                <Text style = {{
+                {GTLJC_inData_info[0] ? 
+                <>
+                  <Text style = {{
                     color : "#212121",
                     fontWeight : 900,
                     fontStyle : "italic"
                   }}>
                      User Location
-                </Text>
-                <Image
-                    source={GTLJC_inData_info[0] && GTLJC_inData_info[0].icon_url} 
-                    style = {{height : 20, width : 20, alignSelf : "center", marginTop : 5}}
-                    
+                  </Text>
+                  <Image
+                      source={GTLJC_inData_info[0] && GTLJC_inData_info[0].icon_url} 
+                      style = {{height : 20, width : 20, alignSelf : "center", marginTop : 5}}
+                      
                   />
+                </>
+                : <Text style = {styles.text}>...</Text>}
+
               </TouchableOpacity>
 
 
@@ -820,46 +803,50 @@ const GTLJC_getDataIn = async ()=>{
                 onPress={()=> GTLJC_moveToClosetAnomalyLocation ()}
                 // disabled = {true}
               >
-                <Text style = {{color:"red", fontSize: 20, fontWeight: 500, alignSelf : "center", fontStyle:"normal", fontFamily: "serif"}}>Closest</Text>
-                <Text style = {{
-                    color : "#2222bb",
-                    fontWeight : 900,
-                    fontStyle : "italic",
-                    fontSize : 10
-                  }}>
-                      {GTLJC_inData_info[1] && GTLJC_inData_info[1].anomaly } 
-                     {/* <Ionicons name = "ion-arrow-right-a" size = {21} color= "white" /> */}
-                </Text>
-                <Image
-                  
-                />
-                
+                {
+                  GTLJC_inData_info[1] ?
+                  <>
+                  <Text style = {{color:"red", fontSize: 20, fontWeight: 500, alignSelf : "center", fontStyle:"normal", fontFamily: "serif"}}>Closest</Text>
+                  <Text style = {{
+                      color : "#2222bb",
+                      fontWeight : 900,
+                      fontStyle : "italic",
+                      fontSize : 10
+                    }}>
+                        {GTLJC_inData_info[1] && GTLJC_inData_info[1].anomaly } 
+                      {/* <Ionicons name = "ion-arrow-right-a" size = {21} color= "white" /> */}
+                  </Text>
                   <Image
-                    source={GTLJC_inData_info[1] && GTLJC_inData_info[1].icon_url} 
-                    style = {{height : 20, width : 20, alignSelf : "center", marginTop : 5}}
                     
                   />
+                  
+                    <Image
+                      source={GTLJC_inData_info[1] && GTLJC_inData_info[1].icon_url} 
+                      style = {{height : 20, width : 20, alignSelf : "center", marginTop : 5}}
+                      
+                    />
 
-                  <Text style = {{
-                    color : "#2222bb",
-                    fontWeight : 900,
-                    fontStyle : "italic",
-                    fontSize : 10
-                  }}>
-                      Distance To : {Math.round(GTLJC_distanceToNextAnomalyFromUser / 1000)} km
-                     
-                </Text>
+                    <Text style = {{
+                      color : "#2222bb",
+                      fontWeight : 900,
+                      fontStyle : "italic",
+                      fontSize : 10
+                    }}>
+                        Distance To : {Math.round(GTLJC_distanceToNextAnomalyFromUser / 1000)} km
+                      
+                    </Text>
 
-                <Text style = {{
-                    color : "#2222bb",
-                    fontWeight : 900,
-                    fontStyle : "italic",
-                    fontSize : 10
-                  }}>
-                      Time : {Math.floor(GTLJC_timeToNextAnomalyFromUser)} hr { Math.round((GTLJC_timeToNextAnomalyFromUser - Math.floor(GTLJC_timeToNextAnomalyFromUser)) * 60)} min
-                     
-                </Text>
-
+                    <Text style = {{
+                        color : "#2222bb",
+                        fontWeight : 900,
+                        fontStyle : "italic",
+                        fontSize : 10
+                      }}>
+                          Time : {Math.floor(GTLJC_timeToNextAnomalyFromUser)} hr { Math.round((GTLJC_timeToNextAnomalyFromUser - Math.floor(GTLJC_timeToNextAnomalyFromUser)) * 60)} min
+                        
+                    </Text>
+                    </> : <Text style = {styles.text}>...</Text>
+                }
         
               </TouchableOpacity>
 
@@ -887,22 +874,21 @@ const GTLJC_getDataIn = async ()=>{
 
                 onPress={()=> GTLJC_handleChangeWithRef("prev")}
               >
-                <Text style = {{
-                    color : "#2222bb",
-                    fontWeight : 900,
-                    fontStyle : "italic",
-                    textAlign : "center"
-                  }}>
-                      { GTLJC_inData_info ? "go back <==" : "Unavailable..." }  
-                     {/* <Ionicons name = "ion-arrow-right-a" size = {21} color= "white" /> */}
-                </Text>
-{/* 
-                  <Image
-                    source={GTLJC_inData_info[GTLJC_anomalyInIndex] && GTLJC_inData_info[GTLJC_anomalyInIndex].icon_url} 
-                    style = {{height : 20, width : 20, alignSelf : "center", marginTop : 5}}
-                    
-                  /> */}
-        
+                {
+                  GTLJC_inData_info[1] ?
+                  <>
+                  <Text style = {{
+                      color : "#2222bb",
+                      fontWeight : 900,
+                      fontStyle : "italic",
+                      textAlign : "center"
+                    }}>
+                        {/* { GTLJC_inData_info[1] ? "go back <==" : "Unavailable..." }   */}
+                        {"go back <=="}  
+                      {/* <Ionicons name = "ion-arrow-right-a" size = {21} color= "white" /> */}
+                  </Text>
+                  </> : <Text style = {styles.text}>...</Text>
+                }
               </TouchableOpacity>
 
 
@@ -923,45 +909,50 @@ const GTLJC_getDataIn = async ()=>{
 
                 onPress={()=> GTLJC_handleChangeWithRef("next")}
               >
-                <Text style = {{
-                    color : "#2222bb",
-                    fontWeight : 900,
-                    fontStyle : "italic",
-                    textAlign : "center"
-                  }}>
-                      { GTLJC_inData_info ? "go forward ==>": "Unavailable..." } 
-                     {/* <Ionicons name = "ion-arrow-right-a" size = {21} color= "white" /> */}
-                </Text>
-                <Image
-                  
-                />
-                
+                {
+                  GTLJC_inData_info[1] ?
+                  <>
+                  <Text style = {{
+                      color : "#2222bb",
+                      fontWeight : 900,
+                      fontStyle : "italic",
+                      textAlign : "center"
+                    }}>
+                        {/* { GTLJC_inData_info ? "go forward ==>": "Unavailable..." }  */}
+                        {"go forward ==>"}
+                      {/* <Ionicons name = "ion-arrow-right-a" size = {21} color= "white" /> */}
+                  </Text>
                   <Image
-                    source={GTLJC_inData_info[GTLJC_anomalyInIndex] && GTLJC_inData_info[GTLJC_anomalyInIndex].icon_url} 
-                    style = {{height : 20, width : 20, alignSelf : "center", marginTop : 5}}
                     
                   />
+                  
+                    <Image
+                      source={GTLJC_inData_info[GTLJC_anomalyInIndex] && GTLJC_inData_info[GTLJC_anomalyInIndex].icon_url} 
+                      style = {{height : 20, width : 20, alignSelf : "center", marginTop : 5}}
+                      
+                    />
 
-                   <Text style = {{
-                    color : "#2222bb",
-                    fontWeight : 900,
-                    fontStyle : "italic",
-                    fontSize : 10,
-                    width : 150,
-                  }}>
-                     {Math.round(GTLJC_distanceToNextAnomalyFromUser_Btn_Nav / 1000)} km, {Math.floor(GTLJC_timeToNextAnomalyFromUser_Btn_Nav)} hr { Math.round((GTLJC_timeToNextAnomalyFromUser_Btn_Nav - Math.floor(GTLJC_timeToNextAnomalyFromUser_Btn_Nav)) * 60)} min
-                     
-                </Text>
-                <Text style = {{
-                    color : "#bb6c22ff",
-                    fontWeight : 900,
-                    fontStyle : "italic",
-                    fontSize : 10
-                  }}>
-                      {GTLJC_inData_info[GTLJC_anomalyInIndex] && GTLJC_inData_info[GTLJC_anomalyInIndex].anomaly } 
-                     {/* <Ionicons name = "ion-arrow-right-a" size = {21} color= "white" /> */}
-                </Text>
-        
+                    <Text style = {{
+                      color : "#2222bb",
+                      fontWeight : 900,
+                      fontStyle : "italic",
+                      fontSize : 10,
+                      width : 150,
+                    }}>
+                      {Math.round(GTLJC_distanceToNextAnomalyFromUser_Btn_Nav / 1000)} km, {Math.floor(GTLJC_timeToNextAnomalyFromUser_Btn_Nav)} hr { Math.round((GTLJC_timeToNextAnomalyFromUser_Btn_Nav - Math.floor(GTLJC_timeToNextAnomalyFromUser_Btn_Nav)) * 60)} min
+                      
+                  </Text>
+                  <Text style = {{
+                      color : "#bb6c22ff",
+                      fontWeight : 900,
+                      fontStyle : "italic",
+                      fontSize : 10
+                    }}>
+                        {GTLJC_inData_info[GTLJC_anomalyInIndex] && GTLJC_inData_info[GTLJC_anomalyInIndex].anomaly } 
+                      {/* <Ionicons name = "ion-arrow-right-a" size = {21} color= "white" /> */}
+                  </Text>
+                  </> : <Text style = {styles.text}>...</Text>
+                }
               </TouchableOpacity>
 
               
@@ -1016,7 +1007,7 @@ const GTLJC_getDataIn = async ()=>{
                         }
                       ],
                       width : 10,
-                      // geodesic : true
+                      geodesic : true
                     }
                   ]}
 
@@ -1087,7 +1078,7 @@ const styles = StyleSheet.create({
     gap: 8,
     backgroundColor: "rgba(114, 47, 55, 1)",
     paddingBottom : 20,
-    paddingTop : 5,
+    paddingTop : 10,
     minHeight : 50,
 
   },
@@ -1096,7 +1087,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 20,
     left: 20,
-    backgroundColor: "#b03613",
+    backgroundColor: "#bf8a7bff",
     padding: 10,
     borderRadius: 30,
     elevation: 5,
@@ -1133,6 +1124,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: 10,
   },
+  text: {
+    color : "#2222bb",
+    fontWeight : 900,
+    fontStyle : "italic",
+    textAlign : "center"
+  }
 });
 
 
